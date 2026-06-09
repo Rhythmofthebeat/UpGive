@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, useCallback, createContext, useContext } f
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // ─── CONFIG ── Replace with your Supabase project values ──────────────────────
-const SUPABASE_URL      = "https://fzqgwccgtblxqzcfsvmw.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6cWd3Y2NndGJseHF6Y2Zzdm13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MDA0OTYsImV4cCI6MjA5NTE3NjQ5Nn0._LPX8bZRWYLFCC83c8x7oUhLaNz4b92UDayM2oPK6jg";
+const SUPABASE_URL      = "https://ndzvsdoqrnldqjiokauv.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kenZzZG9xcm5sZHFqaW9rYXV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMDYzMzYsImV4cCI6MjA5NjU4MjMzNn0.kkIFx-dUgGxpvNwaAVGu9HAHgBVfKgs1bGygKkDKacM";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
