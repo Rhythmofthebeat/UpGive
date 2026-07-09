@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef, useCallback, createContext, useContext } from "react";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// ─── CONFIG ── Replace with your Supabase project values ──────────────────────
-const SUPABASE_URL      = "https://ndzvsdoqrnldqjiokauv.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kenZzZG9xcm5sZHFqaW9rYXV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMDYzMzYsImV4cCI6MjA5NjU4MjMzNn0.kkIFx-dUgGxpvNwaAVGu9HAHgBVfKgs1bGygKkDKacM";
+const SUPABASE_URL      = "https://qiuryrhmttsokdvtzdru.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpdXJ5cmhtdHRzb2tkdnR6ZHJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwMjQ1NDYsImV4cCI6MjA5NzYwMDU0Nn0.PWTtSrx_K9JfIloQi94fD1az3SIdTKgiWj6zZW4IeuA";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
@@ -15,12 +14,12 @@ const TEXT="#111827";
 const MUTED="#6b7280";
 
 const LOCS={
-  atlanta:{label:"Atlanta, GA, USA",short:"Atlanta, GA",tz:"EST"},nyc:{label:"New York, NY, USA",short:"New York, NY",tz:"EST"},
-  london:{label:"London, UK",short:"London",tz:"GMT"},lagos:{label:"Lagos, Nigeria",short:"Lagos",tz:"WAT"},
-  tokyo:{label:"Tokyo, Japan",short:"Tokyo",tz:"JST"},dubai:{label:"Dubai, UAE",short:"Dubai",tz:"GST"},
-  sao:{label:"São Paulo, Brazil",short:"São Paulo",tz:"BRT"},sydney:{label:"Sydney, Australia",short:"Sydney",tz:"AEST"},
-  nairobi:{label:"Nairobi, Kenya",short:"Nairobi",tz:"EAT"},mumbai:{label:"Mumbai, India",short:"Mumbai",tz:"IST"},
-  berlin:{label:"Berlin, Germany",short:"Berlin",tz:"CET"},toronto:{label:"Toronto, Canada",short:"Toronto",tz:"EST"},
+  atlanta:{label:"Atlanta, GA, USA",short:"Atlanta, GA",tz:"EST",country:"USA",c:[33.749,-84.388]},nyc:{label:"New York, NY, USA",short:"New York, NY",tz:"EST",country:"USA",c:[40.713,-74.006]},
+  london:{label:"London, UK",short:"London",tz:"GMT",country:"UK",c:[51.507,-0.128]},lagos:{label:"Lagos, Nigeria",short:"Lagos",tz:"WAT",country:"Nigeria",c:[6.524,3.379]},
+  tokyo:{label:"Tokyo, Japan",short:"Tokyo",tz:"JST",country:"Japan",c:[35.690,139.692]},dubai:{label:"Dubai, UAE",short:"Dubai",tz:"GST",country:"UAE",c:[25.205,55.271]},
+  sao:{label:"São Paulo, Brazil",short:"São Paulo",tz:"BRT",country:"Brazil",c:[-23.551,-46.633]},sydney:{label:"Sydney, Australia",short:"Sydney",tz:"AEST",country:"Australia",c:[-33.869,151.209]},
+  nairobi:{label:"Nairobi, Kenya",short:"Nairobi",tz:"EAT",country:"Kenya",c:[-1.286,36.817]},mumbai:{label:"Mumbai, India",short:"Mumbai",tz:"IST",country:"India",c:[19.076,72.878]},
+  berlin:{label:"Berlin, Germany",short:"Berlin",tz:"CET",country:"Germany",c:[52.520,13.405]},toronto:{label:"Toronto, Canada",short:"Toronto",tz:"EST",country:"Canada",c:[43.653,-79.383]},
 };
 
 const INDUSTRIES=["Technology","Food & Beverage","Healthcare","Education","Apparel","Construction","Agriculture","Manufacturing","Energy","Logistics","Finance","Water & Env.","Creative Arts","Oil & Gas","Aerospace","Telecom"];
@@ -37,7 +36,6 @@ const INTL_CARRIERS={
   in:[{name:"FedEx International India",eta:"4–6 days",price:"$42–$130",rec:true,feats:["India customs","GSTIN docs"]},{name:"India Post EMS",eta:"8–14 days",price:"$18–$55",rec:false,feats:["Budget option"]}],
 };
 
-// ─── AUTH CONTEXT ─────────────────────────────────────────────────────────────
 const AuthCtx=createContext(null);
 const useAuth=()=>useContext(AuthCtx);
 
@@ -45,6 +43,7 @@ function AuthProvider({children}){
   const [user,setUser]=useState(null);
   const [profile,setProfile]=useState(null);
   const [loading,setLoading]=useState(true);
+  const [recovery,setRecovery]=useState(false); // true after clicking a password-reset email link
 
   const loadProfile=useCallback(async(uid)=>{
     const{data}=await supabase.from("profiles").select("*").eq("id",uid).single();
@@ -57,7 +56,8 @@ function AuthProvider({children}){
       if(session?.user)loadProfile(session.user.id);
       setLoading(false);
     });
-    const{data:{subscription}}=supabase.auth.onAuthStateChange((_,session)=>{
+    const{data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{
+      if(event==="PASSWORD_RECOVERY")setRecovery(true);
       setUser(session?.user??null);
       if(session?.user)loadProfile(session.user.id);
       else setProfile(null);
@@ -68,9 +68,11 @@ function AuthProvider({children}){
   const signUp=async(email,password,meta)=>supabase.auth.signUp({email,password,options:{data:meta}});
   const signIn=async(email,password)=>supabase.auth.signInWithPassword({email,password});
   const signOut=()=>supabase.auth.signOut();
+  const sendReset=(email)=>supabase.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});
+  const updatePassword=(password)=>supabase.auth.updateUser({password});
   const refreshProfile=()=>user&&loadProfile(user.id);
 
-  return<AuthCtx.Provider value={{user,profile,loading,signUp,signIn,signOut,refreshProfile}}>{children}</AuthCtx.Provider>;
+  return<AuthCtx.Provider value={{user,profile,loading,recovery,setRecovery,signUp,signIn,signOut,sendReset,updatePassword,refreshProfile}}>{children}</AuthCtx.Provider>;
 }
 
 // ─── BASE COMPONENTS ──────────────────────────────────────────────────────────
@@ -130,11 +132,13 @@ function SecHead({icon,children,action}){
 
 function Empty({icon,title,sub,action}){
   return<div style={{textAlign:"center",padding:"56px 24px"}}>
-    <div style={{width:48,height:48,borderRadius:12,background:G3,margin:"0 auto 16px",display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke={G} strokeWidth="1.5"/><line x1="10" y1="6.5" x2="10" y2="10.5" stroke={G} strokeWidth="1.5" strokeLinecap="round"/><circle cx="10" cy="13" r=".75" fill={G}/></svg>
+    <div style={{width:74,height:74,borderRadius:"50%",background:G3,margin:"0 auto 18px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:34,border:`1px solid ${G4}`}}>
+      {icon||(
+        <svg width="24" height="24" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke={G} strokeWidth="1.5"/><line x1="10" y1="6.5" x2="10" y2="10.5" stroke={G} strokeWidth="1.5" strokeLinecap="round"/><circle cx="10" cy="13" r=".75" fill={G}/></svg>
+      )}
     </div>
-    <div style={{fontSize:14,fontWeight:600,color:TEXT,marginBottom:5}}>{title}</div>
-    {sub&&<div style={{fontSize:13,color:MUTED,marginBottom:18,lineHeight:1.6,maxWidth:280,margin:"0 auto 18px"}}>{sub}</div>}
+    <div style={{fontSize:16,fontWeight:700,color:TEXT,marginBottom:6}}>{title}</div>
+    {sub&&<div style={{fontSize:13,color:MUTED,marginBottom:18,lineHeight:1.65,maxWidth:320,margin:"0 auto 18px"}}>{sub}</div>}
     {action&&<div style={{marginTop:16}}>{action}</div>}
   </div>;
 }
@@ -160,6 +164,182 @@ const CAT_IMAGES={
   "Other":"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&q=80",
 };
 const DEFAULT_IMG="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&q=80";
+
+// ═══ Evan's work: Help modal, static info pages & footer ═══
+function HelpModal({onClose}){
+  const faqs=[
+    {q:"How do I post a listing?",a:"Click 'List Item' in the top navigation bar. Fill out the title, category, condition, and delivery options. You can post for free, at a reduced price, or as a swap."},
+    {q:"How do I claim an item?",a:"Browse listings and click 'Claim' on any item you need. The donor will receive a notification and can approve or decline your request."},
+    {q:"Is UpGive free to use?",a:"Yes — UpGive is completely free for donors and recipients. We never charge fees for posting or claiming items."},
+    {q:"How does delivery work?",a:"Delivery is arranged between the donor and recipient via UpGive Messages. The donor is responsible for shipping costs. Use the Delivery tab for carrier options and pricing."},
+    {q:"How do I message a donor?",a:"Click 'Message' on any listing card or from the listing detail page. You must be signed in to send messages."},
+    {q:"What types of organizations can join?",a:"Companies, nonprofits, government agencies, and individuals are all welcome. Verified organizations receive priority matching."},
+    {q:"How do I get verified?",a:"After signing up, go to your Dashboard then Settings and complete your organization profile. Our team reviews verification requests within 2-3 business days."},
+    {q:"Can I delete my listing?",a:"Yes — go to Dashboard then Listings and click 'Remove' next to any of your listings."},
+  ];
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={onClose}>
+      <div style={{background:"#fff",borderRadius:16,width:"100%",maxWidth:560,maxHeight:"80vh",overflow:"hidden",display:"flex",flexDirection:"column",boxShadow:"0 24px 64px rgba(0,0,0,.18)"}} onClick={e=>e.stopPropagation()}>
+        <div style={{padding:"20px 24px 16px",borderBottom:`1px solid ${BORDER}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div>
+            <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:22,color:TEXT,margin:"0 0 3px"}}>Help & FAQ</h2>
+            <p style={{fontSize:12,color:MUTED,margin:0}}>Common questions about using UpGive</p>
+          </div>
+          <button onClick={onClose} style={{width:32,height:32,borderRadius:"50%",border:`1px solid ${BORDER}`,background:"#fff",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",color:MUTED}}>x</button>
+        </div>
+        <div style={{overflowY:"auto",padding:"16px 24px 24px",flex:1}}>
+          {faqs.map((f,i)=>(
+            <div key={i} style={{marginBottom:18,paddingBottom:18,borderBottom:i<faqs.length-1?`1px solid #f1f5f9`:""}}>
+              <div style={{fontSize:13,fontWeight:600,color:TEXT,marginBottom:6,display:"flex",gap:8,alignItems:"flex-start"}}>
+                <span style={{width:20,height:20,borderRadius:"50%",background:G3,color:G2,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,flexShrink:0,marginTop:1}}>{i+1}</span>
+                {f.q}
+              </div>
+              <div style={{fontSize:13,color:MUTED,lineHeight:1.7,paddingLeft:28}}>{f.a}</div>
+            </div>
+          ))}
+          <div style={{background:G3,border:`1px solid ${G4}`,borderRadius:10,padding:"14px 16px",marginTop:8}}>
+            <div style={{fontSize:13,fontWeight:600,color:G2,marginBottom:4}}>Still need help?</div>
+            <div style={{fontSize:12,color:"#15803d",lineHeight:1.6}}>Email us at <strong>support@upgive.org</strong> and we will get back to you within 24 hours.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── STATIC PAGE MODAL (for footer links: About, Contact, Terms, Privacy) ──────
+function StaticPageModal({page,onClose}){
+  const pages={
+    about:{
+      title:"About UpGive",
+      content:<>
+        <p style={{fontSize:14,color:"#374151",lineHeight:1.85,marginBottom:16}}>UpGive is a corporate surplus marketplace connecting organizations that have goods to give with communities that need them. We believe every unused item is a resource waiting to find purpose.</p>
+        <h3 style={{fontSize:15,fontWeight:700,color:TEXT,marginBottom:8}}>Our Mission</h3>
+        <p style={{fontSize:14,color:"#374151",lineHeight:1.85,marginBottom:16}}>To eliminate waste by creating a seamless, verified pipeline between surplus goods and the communities, nonprofits, and individuals who need them most -- at zero cost.</p>
+        <h3 style={{fontSize:15,fontWeight:700,color:TEXT,marginBottom:8}}>Who We Serve</h3>
+        <ul style={{fontSize:14,color:"#374151",lineHeight:2,paddingLeft:20}}>
+          <li>Corporations with surplus inventory</li>
+          <li>Nonprofits and humanitarian organizations</li>
+          <li>Government agencies</li>
+          <li>Schools, clinics, and community groups</li>
+          <li>Individuals looking to give or receive</li>
+        </ul>
+      </>
+    },
+    contact:{
+      title:"Contact Us",
+      content:<>
+        <p style={{fontSize:14,color:"#374151",lineHeight:1.85,marginBottom:20}}>We would love to hear from you. Reach out through any of the channels below.</p>
+        {[{label:"General Inquiries",value:"hello@upgive.org",icon:"📧"},{label:"Support",value:"support@upgive.org",icon:"🛠️"},{label:"Partnerships",value:"partners@upgive.org",icon:"🤝"},{label:"Press & Media",value:"press@upgive.org",icon:"📰"}].map(({label,value,icon})=>(
+          <div key={label} style={{display:"flex",gap:14,alignItems:"center",padding:"14px 16px",border:`1px solid ${BORDER}`,borderRadius:10,marginBottom:10}}>
+            <span style={{fontSize:22}}>{icon}</span>
+            <div><div style={{fontSize:11,fontWeight:700,color:MUTED,textTransform:"uppercase",letterSpacing:".06em",marginBottom:2}}>{label}</div><div style={{fontSize:14,color:G2,fontWeight:500}}>{value}</div></div>
+          </div>
+        ))}
+      </>
+    },
+    terms:{
+      title:"Terms of Service",
+      content:<>
+        <p style={{fontSize:12,color:MUTED,marginBottom:16}}>Last updated: June 2026</p>
+        {[
+          {h:"1. Acceptance of Terms",b:"By accessing or using UpGive, you agree to be bound by these Terms of Service."},
+          {h:"2. Use of the Platform",b:"UpGive is a marketplace for surplus goods. You agree not to post fraudulent listings, misrepresent goods, or use the platform for any unlawful purpose."},
+          {h:"3. Listings and Transactions",b:"Donors are responsible for the accuracy of their listings and for arranging delivery once a claim is approved. UpGive is not a party to transactions between users."},
+          {h:"4. Account Responsibility",b:"You are responsible for maintaining the confidentiality of your account credentials and for all activity that occurs under your account."},
+          {h:"5. Prohibited Content",b:"You may not list illegal items, hazardous materials, counterfeit goods, or items that violate third-party intellectual property rights."},
+          {h:"6. Termination",b:"UpGive reserves the right to suspend or terminate accounts that violate these terms."},
+        ].map(({h,b})=>(
+          <div key={h} style={{marginBottom:16}}>
+            <div style={{fontSize:13,fontWeight:700,color:TEXT,marginBottom:5}}>{h}</div>
+            <p style={{fontSize:13,color:"#374151",lineHeight:1.75,margin:0}}>{b}</p>
+          </div>
+        ))}
+      </>
+    },
+    privacy:{
+      title:"Privacy Policy",
+      content:<>
+        <p style={{fontSize:12,color:MUTED,marginBottom:16}}>Last updated: June 2026</p>
+        {[
+          {h:"Information We Collect",b:"We collect information you provide when creating an account (name, email, organization details), information about your listings and transactions, and usage data to improve our platform."},
+          {h:"How We Use Your Information",b:"We use your information to operate the UpGive platform, facilitate connections between donors and recipients, and improve our services."},
+          {h:"Information Sharing",b:"We do not sell your personal information. We share information only as necessary to operate the platform or as required by law."},
+          {h:"Data Security",b:"We use industry-standard security measures to protect your information. Your password is encrypted and we use Supabase's secure authentication system."},
+          {h:"Your Rights",b:"You may access, update, or delete your account information at any time through Dashboard then Settings. To request full data deletion, contact privacy@upgive.org."},
+          {h:"Contact",b:"For privacy-related questions, email privacy@upgive.org."},
+        ].map(({h,b})=>(
+          <div key={h} style={{marginBottom:16}}>
+            <div style={{fontSize:13,fontWeight:700,color:TEXT,marginBottom:5}}>{h}</div>
+            <p style={{fontSize:13,color:"#374151",lineHeight:1.75,margin:0}}>{b}</p>
+          </div>
+        ))}
+      </>
+    },
+  };
+  const pg=pages[page];
+  if(!pg)return null;
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.45)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={onClose}>
+      <div style={{background:"#fff",borderRadius:16,width:"100%",maxWidth:580,maxHeight:"82vh",overflow:"hidden",display:"flex",flexDirection:"column",boxShadow:"0 24px 64px rgba(0,0,0,.18)"}} onClick={e=>e.stopPropagation()}>
+        <div style={{padding:"20px 24px 16px",borderBottom:`1px solid ${BORDER}`,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:22,color:TEXT,margin:0}}>{pg.title}</h2>
+          <button onClick={onClose} style={{width:32,height:32,borderRadius:"50%",border:`1px solid ${BORDER}`,background:"#fff",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",color:MUTED}}>x</button>
+        </div>
+        <div style={{overflowY:"auto",padding:"20px 24px 28px",flex:1}}>{pg.content}</div>
+      </div>
+    </div>
+  );
+}
+
+// ── ACTION ITEM 6: FOOTER ─────────────────────────────────────────────────────
+function Footer({onOpenPage}){
+  const link=(label,page)=>(
+    <div onClick={()=>onOpenPage(page)} style={{fontSize:13,color:"#9ca3af",marginBottom:9,cursor:"pointer",transition:"color .12s"}} onMouseEnter={e=>e.currentTarget.style.color="#fff"} onMouseLeave={e=>e.currentTarget.style.color="#9ca3af"}>{label}</div>
+  );
+  return(
+    <footer style={{background:"#111827",borderTop:"1px solid #1f2937",padding:"40px 28px 28px",marginTop:"auto"}}>
+      <div style={{maxWidth:1100,margin:"0 auto"}}>
+        <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr",gap:40,marginBottom:36}}>
+          <div>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+              <div style={{width:30,height:30,borderRadius:7,background:G,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2C8 2 3 5 3 9a5 5 0 0010 0C13 5 8 2 8 2z" fill="rgba(255,255,255,.9)"/><path d="M8 7v5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              </div>
+              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#fff"}}>UpGive</div>
+            </div>
+            <p style={{fontSize:13,color:"#9ca3af",lineHeight:1.75,maxWidth:240,margin:"0 0 16px"}}>Turning corporate surplus into community impact. Free to join, free to use.</p>
+            <div style={{fontSize:12,color:"#6b7280"}}>2026 UpGive. All rights reserved.</div>
+          </div>
+          <div>
+            <div style={{fontSize:11,fontWeight:700,color:"#fff",textTransform:"uppercase",letterSpacing:"1px",marginBottom:14}}>Platform</div>
+            {["Browse Listings","Post a Listing","Community Board","Delivery Guide"].map(l=>(
+              <div key={l} style={{fontSize:13,color:"#9ca3af",marginBottom:9}}>{l}</div>
+            ))}
+          </div>
+          <div>
+            <div style={{fontSize:11,fontWeight:700,color:"#fff",textTransform:"uppercase",letterSpacing:"1px",marginBottom:14}}>Company</div>
+            {link("About","about")}
+            {link("Contact","contact")}
+          </div>
+          <div>
+            <div style={{fontSize:11,fontWeight:700,color:"#fff",textTransform:"uppercase",letterSpacing:"1px",marginBottom:14}}>Legal</div>
+            {link("Terms of Service","terms")}
+            {link("Privacy Policy","privacy")}
+          </div>
+        </div>
+        <div style={{borderTop:"1px solid #1f2937",paddingTop:20,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
+          <div style={{fontSize:12,color:"#4b5563"}}>Built to end surplus waste. Every item listed is a community served.</div>
+          <div style={{display:"flex",gap:6}}>
+            {["Free to use","No ads","Zero commissions"].map(l=>(
+              <span key={l} style={{fontSize:10,padding:"3px 10px",borderRadius:99,background:"#1f2937",color:"#6b7280",fontWeight:500}}>{l}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+}
 
 function ListingCard({listing,onView,onClaim,onMsg}){
   const{user}=useAuth();
@@ -225,11 +405,13 @@ function GoogleBtn({label="Continue with Google"}){
 
 // ─── AUTH SCREEN ──────────────────────────────────────────────────────────────
 function AuthScreen({onSuccess}){
-  const{signIn,signUp}=useAuth();
+  const{signIn,signUp,sendReset}=useAuth();
   const[mode,setMode]=useState("login");
   const[step,setStep]=useState(1);
   const[loading,setLoading]=useState(false);
   const[error,setError]=useState("");
+  const[sent,setSent]=useState(false);            // reset email sent
+  const[verifyNotice,setVerifyNotice]=useState(false); // signup done, awaiting email verification
   const[form,setForm]=useState({email:"",password:"",display_name:"",org_name:"",account_type:"company",country:"",city:"",location_key:"atlanta",primary_industry:"Technology",delivery_local:true,delivery_domestic:true,delivery_international:false});
   const set=k=>e=>setForm(f=>({...f,[k]:e.target.value}));
   const tog=k=>()=>setForm(f=>({...f,[k]:!f[k]}));
@@ -243,17 +425,59 @@ function AuthScreen({onSuccess}){
 
   const handleRegister=async()=>{
     setError("");setLoading(true);
-    const{data,error}=await signUp(form.email,form.password,{display_name:form.display_name||form.org_name,account_type:form.account_type});
+    const meta={display_name:form.display_name||form.org_name,org_name:form.org_name,account_type:form.account_type,city:form.city,country:form.country,location_key:form.location_key,primary_industry:form.primary_industry,delivery_prefs:{local:form.delivery_local,domestic:form.delivery_domestic,international:form.delivery_international}};
+    const{data,error}=await signUp(form.email,form.password,meta);
     if(error){setError(error.message);setLoading(false);return;}
+    // If "Confirm email" is ON in Supabase, there is no session yet — the user
+    // must click the verification link before they can sign in. Don't write the
+    // profile here (RLS will block it without a session) — show a notice instead.
+    if(data.user&&!data.session){setLoading(false);setVerifyNotice(true);return;}
+    // "Confirm email" OFF: user is already signed in, so save the full profile now.
     if(data.user){
-      await supabase.from("profiles").update({display_name:form.display_name||form.org_name,org_name:form.org_name,account_type:form.account_type,city:form.city,country:form.country,location_key:form.location_key,primary_industry:form.primary_industry,delivery_prefs:{local:form.delivery_local,domestic:form.delivery_domestic,international:form.delivery_international}}).eq("id",data.user.id);
+      await supabase.from("profiles").update({display_name:meta.display_name,org_name:meta.org_name,account_type:meta.account_type,city:meta.city,country:meta.country,location_key:meta.location_key,primary_industry:meta.primary_industry,delivery_prefs:meta.delivery_prefs}).eq("id",data.user.id);
     }
     setLoading(false);
-    if(!error)onSuccess();
+    onSuccess();
+  };
+
+  const handleForgot=async e=>{
+    e.preventDefault();setError("");setLoading(true);
+    const{error}=await sendReset(form.email);
+    setLoading(false);
+    if(error)setError(error.message);else setSent(true);
   };
 
   const types=[{id:"company",icon:"🏢",label:"Company",sub:"Sell or donate surplus"},{id:"nonprofit",icon:"🤝",label:"Nonprofit",sub:"Receive goods"},{id:"individual",icon:"👤",label:"Individual",sub:"Give or receive"},{id:"government",icon:"🏛️",label:"Government",sub:"Public agency"}];
   const steps=["Account","Profile","Industry","Delivery"];
+
+  // ── Forgot-password screen ──
+  if(mode==="forgot")return(
+    <div style={{display:"flex",justifyContent:"center",padding:40}}>
+      <div style={{...card,padding:36,width:360,boxShadow:"0 4px 24px rgba(0,0,0,.07),0 1px 4px rgba(0,0,0,.04)"}}>
+        <div style={{textAlign:"center",marginBottom:24}}><div style={{fontFamily:"'DM Serif Display',serif",fontSize:22,color:G,letterSpacing:"-0.5px",marginBottom:12}}>UpGive</div><h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:24,color:"#0f172a",margin:"0 0 6px",letterSpacing:"-.3px"}}>Reset password</h2><p style={{fontSize:13,color:"#64748b",margin:0,lineHeight:1.6}}>We'll email you a reset link</p></div>
+        {error&&<Alert type="red" icon="⚠️">{error}</Alert>}
+        {sent
+          ?<div style={{padding:"14px 16px",background:G3,border:`1px solid ${G4}`,borderRadius:8,fontSize:13,color:G2,lineHeight:1.6}}>✅ Check your email for the reset link, then open it on this device to set a new password.</div>
+          :<form onSubmit={handleForgot}>
+            <TInp label="Email" type="email" placeholder="you@org.com" value={form.email} onChange={set("email")} required style={{marginBottom:14}}/>
+            <Btn v="primary" sz="lg" type="submit" disabled={loading} style={{width:"100%",justifyContent:"center"}}>{loading?"Sending…":"Send reset link"}</Btn>
+          </form>}
+        <Btn v="ghost" onClick={()=>{setMode("login");setSent(false);setError("");}} style={{width:"100%",justifyContent:"center",marginTop:12,color:"#64748b",fontSize:12}}>← Back to sign in</Btn>
+      </div>
+    </div>
+  );
+
+  // ── Post-signup "verify your email" notice ──
+  if(verifyNotice)return(
+    <div style={{display:"flex",justifyContent:"center",padding:40}}>
+      <div style={{...card,padding:36,width:400,textAlign:"center",boxShadow:"0 4px 24px rgba(0,0,0,.07),0 1px 4px rgba(0,0,0,.04)"}}>
+        <div style={{fontSize:34,marginBottom:10}}>📬</div>
+        <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:22,color:"#0f172a",margin:"0 0 8px"}}>Check your inbox</h2>
+        <p style={{fontSize:13,color:"#64748b",lineHeight:1.65,margin:"0 0 18px"}}>We sent a verification link to <strong>{form.email}</strong>. Click it to activate your account, then sign in.</p>
+        <Btn v="primary" sz="lg" onClick={()=>{setVerifyNotice(false);setMode("login");setStep(1);}} style={{width:"100%",justifyContent:"center"}}>Go to sign in</Btn>
+      </div>
+    </div>
+  );
 
   if(mode==="login")return(
     <div style={{display:"flex",justifyContent:"center",padding:40}}>
@@ -265,6 +489,7 @@ function AuthScreen({onSuccess}){
           <TInp label="Password" type="password" placeholder="••••••••" value={form.password} onChange={set("password")} required style={{marginBottom:14}}/>
           <Btn v="primary" sz="lg" type="submit" disabled={loading} style={{width:"100%",justifyContent:"center"}}>{loading?"Signing in…":"Sign in"}</Btn>
         </form>
+        <div style={{textAlign:"right",marginTop:10}}><button type="button" onClick={()=>{setMode("forgot");setError("");setSent(false);}} style={{background:"none",border:"none",color:G,fontSize:12,fontWeight:500,cursor:"pointer",padding:0}}>Forgot password?</button></div>
         <div style={{display:"flex",alignItems:"center",gap:10,margin:"12px 0 4px"}}><div style={{flex:1,height:1,background:"#e0ede7"}}/><span style={{fontSize:11,color:"#94a3b8"}}>or</span><div style={{flex:1,height:1,background:"#e0ede7"}}/></div>
         <GoogleBtn/>
         <Btn v="ghost" onClick={()=>setMode("register")} style={{width:"100%",justifyContent:"center",marginTop:10,color:"#64748b",fontSize:12}}>Don't have an account? <strong style={{color:G,marginLeft:4}}>Create one</strong></Btn>
@@ -320,6 +545,43 @@ function AuthScreen({onSuccess}){
         <div style={{display:"flex",alignItems:"center",gap:10,margin:"14px 0 4px"}}><div style={{flex:1,height:1,background:"#e0ede7"}}/><span style={{fontSize:11,color:"#94a3b8"}}>or sign up with</span><div style={{flex:1,height:1,background:"#e0ede7"}}/></div>
         <GoogleBtn label="Sign up with Google"/>
         <div style={{textAlign:"center",marginTop:10}}><button onClick={()=>{setMode("login");setStep(1);setError("");}} style={{background:"none",border:"none",color:"#64748b",fontSize:12,cursor:"pointer"}}>Already have an account? <strong style={{color:G}}>Sign in</strong></button></div>
+      </div>
+    </div>
+  );
+}
+
+// ─── RESET PASSWORD SCREEN (shown after the user clicks the email reset link) ──
+function ResetPasswordScreen(){
+  const{updatePassword,setRecovery}=useAuth();
+  const[pw,setPw]=useState("");
+  const[pw2,setPw2]=useState("");
+  const[loading,setLoading]=useState(false);
+  const[error,setError]=useState("");
+  const[done,setDone]=useState(false);
+  const submit=async e=>{
+    e.preventDefault();setError("");
+    if(pw.length<8){setError("Password must be at least 8 characters.");return;}
+    if(pw!==pw2){setError("Passwords don't match.");return;}
+    setLoading(true);
+    const{error}=await updatePassword(pw);
+    setLoading(false);
+    if(error)setError(error.message);else setDone(true);
+  };
+  return(
+    <div style={{display:"flex",justifyContent:"center",padding:40,minHeight:"100vh",alignItems:"flex-start",fontFamily:"'Inter',system-ui,sans-serif"}}>
+      <div style={{...card,padding:36,width:360,marginTop:60,boxShadow:"0 4px 24px rgba(0,0,0,.07),0 1px 4px rgba(0,0,0,.04)"}}>
+        <div style={{textAlign:"center",marginBottom:24}}><div style={{fontFamily:"'DM Serif Display',serif",fontSize:22,color:G,letterSpacing:"-0.5px",marginBottom:12}}>UpGive</div><h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:24,color:"#0f172a",margin:"0 0 6px",letterSpacing:"-.3px"}}>Set a new password</h2></div>
+        {error&&<Alert type="red" icon="⚠️">{error}</Alert>}
+        {done
+          ?<div>
+            <div style={{padding:"14px 16px",background:G3,border:`1px solid ${G4}`,borderRadius:8,fontSize:13,color:G2,lineHeight:1.6,marginBottom:14}}>✅ Password updated — you're signed in.</div>
+            <Btn v="primary" sz="lg" onClick={()=>setRecovery(false)} style={{width:"100%",justifyContent:"center"}}>Continue →</Btn>
+          </div>
+          :<form onSubmit={submit}>
+            <TInp label="New password" type="password" placeholder="Min 8 characters" value={pw} onChange={e=>setPw(e.target.value)} required style={{marginBottom:10}}/>
+            <TInp label="Confirm password" type="password" placeholder="Re-enter password" value={pw2} onChange={e=>setPw2(e.target.value)} required style={{marginBottom:14}}/>
+            <Btn v="primary" sz="lg" type="submit" disabled={loading} style={{width:"100%",justifyContent:"center"}}>{loading?"Updating…":"Update password"}</Btn>
+          </form>}
       </div>
     </div>
   );
@@ -788,7 +1050,7 @@ function MarketScreen({onClaim,onView,onMsg}){
 }
 
 // ─── LOCAL SCREEN ─────────────────────────────────────────────────────────────
-function LocalScreen({loc,onGoStore}){
+function LocalScreen({loc,onGoStore,onGo}){
   const[orgs,setOrgs]=useState([]);
   const[loading,setLoading]=useState(true);
   const[filter,setFilter]=useState("All");
@@ -823,7 +1085,7 @@ function LocalScreen({loc,onGoStore}){
             </div>
           ))}
         </div>
-      :<Empty icon="🗺️" title={`No organizations in ${locData.short} yet`} sub="Be the first to join your local UpGive market."/>}
+      :<Empty icon="🗺️" title={`No organizations in ${locData.short} yet`} sub="Your local market is just getting started. List a surplus item to put your organization on the map and inspire others nearby to join." action={<Btn v="primary" onClick={()=>onGo&&onGo("list")}>List the first item</Btn>}/>}
   </div>;
 }
 
@@ -954,7 +1216,7 @@ function CommunityScreen({onGo}){
 }
 
 // ─── MESSAGES SCREEN ──────────────────────────────────────────────────────────
-function MessagesScreen({onGoDelivery}){
+function MessagesScreen({onGoDelivery,onGo}){
   const{user}=useAuth();
   const[convos,setConvos]=useState([]);
   const[active,setActive]=useState(null);
@@ -997,7 +1259,14 @@ function MessagesScreen({onGoDelivery}){
         <div style={{padding:"11px 14px",borderBottom:"1px solid #e0ede7",fontSize:13,fontWeight:700,color:"#0f172a"}}>Conversations ({convos.length})</div>
         <div style={{overflowY:"auto",flex:1}}>
           {loading&&<Spinner/>}
-          {!loading&&convos.length===0&&<div style={{padding:20,textAlign:"center",color:"#94a3b8",fontSize:12}}>No conversations yet.<br/>Message a vendor to start.</div>}
+          {!loading&&convos.length===0&&(
+            <div style={{padding:20,textAlign:"center"}}>
+              <div style={{fontSize:32,marginBottom:10}}>💬</div>
+              <div style={{fontSize:13,fontWeight:600,color:TEXT,marginBottom:6}}>No conversations yet</div>
+              <div style={{fontSize:12,color:MUTED,lineHeight:1.7,marginBottom:14}}>Find something you need and reach out to a donor to get started.</div>
+              <button onClick={()=>onGo&&onGo("market")} style={{fontSize:12,fontWeight:600,color:G,background:"none",border:`1px solid ${G}`,borderRadius:6,padding:"6px 14px",cursor:"pointer",fontFamily:"inherit"}}>Browse Available Goods</button>
+            </div>
+          )}
           {convos.map(c=>{
             const o=other(c);
             return<div key={c.id} onClick={()=>setActive(c)} style={{padding:"10px 14px",cursor:"pointer",borderBottom:"1px solid #f1f5f9",background:active?.id===c.id?G3:"#fff"}}>
@@ -1044,10 +1313,119 @@ function MessagesScreen({onGoDelivery}){
 }
 
 // ─── DELIVERY SCREEN ──────────────────────────────────────────────────────────
-function DeliveryScreen({loc}){
+// ─── DELIVERY SUGGESTION ENGINE ───────────────────────────────────────────────
+// Auto-generates ranked delivery options for a listing, based on the route from
+// the donor's location (origin) to the requesting org's location (destination).
+function haversineKm(a,b){
+  if(!a||!b)return null;
+  const R=6371,toRad=d=>d*Math.PI/180;
+  const dLat=toRad(b[0]-a[0]),dLng=toRad(b[1]-a[1]);
+  const s=Math.sin(dLat/2)**2+Math.cos(toRad(a[0]))*Math.cos(toRad(b[0]))*Math.sin(dLng/2)**2;
+  return Math.round(2*R*Math.asin(Math.sqrt(s)));
+}
+
+function getDeliverySuggestions(item,originKey,destKey){
+  const O=LOCS[originKey]||LOCS.atlanta;
+  const D=destKey?(LOCS[destKey]||null):null;
+  const dist=D?haversineKm(O.c,D.c):null;
+  const sameCity=originKey&&destKey&&originKey===destKey;
+  const sameCountry=D&&O.country===D.country;
+  const routeType=sameCity?"local":sameCountry?"domestic":D?"international":"unknown";
+  const opts=[];
+
+  // Local pickup — only when both parties share a city and the donor offers it
+  if(sameCity&&item?.pickup_available!==false)
+    opts.push({icon:"✅",name:"Local pickup",sub:`Both parties in ${O.short} — arrange directly`,price:"Free",eta:"Flexible",rec:true,recLabel:"Best for this route · zero cost & emissions",feats:["No shipping fees","Coordinate via messages","Same-day possible"],cons:["Both must be in the same city","Needs manual coordination"],score:100});
+
+  // Cold chain — required if the item is perishable
+  if(item?.cold_chain)
+    opts.push({icon:"❄️",name:"Refrigerated cold-chain carrier",sub:"Temperature-controlled · FDA compliant",price:"$0.18/lb/day",eta:routeType==="international"?"3–7 days":"1–3 days",rec:!sameCity,recLabel:"Required for perishables",feats:["Temp monitoring","Last-mile included","FDA compliant"],cons:["Higher cost per lb","Needs advance booking"],score:90});
+
+  // Bulk / freight — heavy or palletised goods
+  if(item?.bulk_freight)
+    opts.push(routeType==="international"
+      ?{icon:"🚢",name:"Ocean freight (LCL/FCL)",sub:"Containerised bulk by sea",price:"$800–$4,200",eta:"14–45 days",feats:["20ft / 40ft containers","Global ports","Lowest cost per kg"],cons:["Very slow (weeks)","Port-to-port, not door-to-door"],score:70}
+      :{icon:"🚛",name:"LTL freight",sub:"Pallets & crates · liftgate included",price:"$180–$800",eta:"3–7 days",rec:!sameCity&&!item?.cold_chain,recLabel:"Best for pallets & bulk",feats:["Up to several tonnes","Door to door","Liftgate included"],cons:["Not for small parcels","Costlier than parcel post"],score:75});
+
+  // General carriers for the route (always present — the fallback)
+  if(routeType==="domestic"||routeType==="local"){
+    opts.push({icon:"🚚",name:"UPS Ground / FedEx",sub:`Domestic parcel · ${O.country}`,price:"$12–$45",eta:dist&&dist>1500?"3–6 days":"2–4 days",rec:routeType==="domestic"&&!item?.cold_chain&&!item?.bulk_freight,recLabel:"Reliable domestic option",feats:["Tracking included","Up to 150 lbs","Door to door"],cons:["Price rises with weight","Domestic only"],score:60});
+    opts.push({icon:"📮",name:"USPS Priority Mail",sub:"Affordable for parcels under 70 lbs",price:"$8–$26",eta:"1–3 days",feats:["Low cost","Free pickup"],cons:["Weight & size limits","Less tracking detail"],score:40});
+  }
+  if(routeType==="international"){
+    opts.push({icon:"🚀",name:"DHL Express Worldwide",sub:`${O.short} → ${D.short} · customs handled`,price:"$60–$220",eta:dist&&dist>10000?"4–7 days":"2–5 days",rec:!item?.cold_chain&&!item?.bulk_freight,recLabel:"Fastest international option",feats:["Door to door","Customs clearance","Full tracking"],cons:["Pricier than economy","Duties may apply"],score:65});
+    opts.push({icon:"📦",name:"FedEx International Economy",sub:"Slower but cheaper cross-border",price:"$45–$160",eta:"5–10 days",feats:["Customs docs included","Duties estimate","Cheaper than express"],cons:["Slower (5–10 days)","Duties may apply"],score:45});
+  }
+  if(routeType==="unknown")
+    opts.push({icon:"📦",name:"General courier",sub:"Set the recipient's location to see tailored carriers",price:"Varies",eta:"—",feats:["UPS","FedEx","DHL"],cons:["Set destination for real quotes"],score:10});
+
+  opts.sort((a,b)=>(b.rec?1:0)-(a.rec?1:0)||b.score-a.score);
+  const kg=estWeight(item);
+  const rateFor=o=>{const n=o.name.toLowerCase();if(n.includes("pickup"))return null;if(n.includes("ocean"))return[400,.15,1];if(n.includes("ltl")||n.includes("freight"))return[120,.4,3];if(n.includes("cold"))return[20,2.2,7];if(n.includes("dhl")||n.includes("express"))return[25,1.6,9];if(n.includes("economy")||n.includes("international"))return[18,1,5];if(n.includes("usps"))return[5,.6,3];return[6,.8,4];};
+  const urlFor=o=>{const n=o.name.toLowerCase();if(n.includes("pickup"))return null;if(n.includes("usps"))return"https://www.usps.com";if(n.includes("dhl"))return"https://www.dhl.com";if(n.includes("ups"))return"https://www.ups.com";if(n.includes("fedex"))return"https://www.fedex.com";if(n.includes("ocean")||n.includes("ltl")||n.includes("freight"))return"https://www.freightos.com";if(n.includes("cold"))return"https://www.fedex.com";return null;};
+  opts.forEach(o=>{const r=rateFor(o);o.url=urlFor(o);if(!r){o.price="Free";return;}o.price="~$"+Math.round(r[0]+r[1]*kg+r[2]*((dist||300)/1000)).toLocaleString();});
+  return{dist,routeType,kg,originShort:O.short,destShort:D?.short||null,originLoc:O,destLoc:D,options:opts};
+}
+
+// estimate total shipment weight (kg) from quantity + unit + category
+function estWeight(item){
+  const catKg={Electronics:2.5,Food:0.6,Education:1.2,Clothing:0.4,Medical:0.8,Furniture:15,Toys:0.5,Other:1.2};
+  const qty=Number(item?.quantity)||1;
+  const u=(item?.unit||"").toLowerCase();
+  let kg;
+  if(u.includes("kg"))kg=qty;
+  else if(u.includes("lb"))kg=qty*0.45;
+  else if(u.includes("ton")||u.includes("pallet"))kg=qty*500;
+  else kg=qty*(catKg[item?.category]||1.2);
+  return Math.max(1,Math.round(kg));
+}
+
+// ─── ROUTE MAP (dependency-free SVG: plots origin + destination pins + arc) ────
+function RouteMap({o,d,dist}){
+  if(!o?.c||!d?.c)return null;
+  const W=720,H=320;
+  const proj=([lat,lng])=>[(lng+180)/360*W,(90-lat)/180*H];
+  const[ox,oy]=proj(o.c),[dx,dy]=proj(d.c);
+  const lift=Math.min(120,Math.max(45,Math.hypot(dx-ox,dy-oy)*0.3));
+  let my=(oy+dy)/2-lift; if(my<26)my=26;
+  const mx=(ox+dx)/2;
+  const grid=[];
+  for(let lng=-150;lng<=150;lng+=30){const x=(lng+180)/360*W;grid.push(<line key={"v"+lng} x1={x} y1={0} x2={x} y2={H} stroke="#e3efe8" strokeWidth="1"/>);}
+  for(let lat=-60;lat<=60;lat+=30){const y=(90-lat)/180*H;grid.push(<line key={"h"+lat} x1={0} y1={y} x2={W} y2={y} stroke="#e3efe8" strokeWidth="1"/>);}
+  const pin=(x,y,color,label)=>(
+    <g key={label}>
+      <line x1={x} y1={y} x2={x} y2={y-15} stroke={color} strokeWidth="2.5"/>
+      <circle cx={x} cy={y-19} r="7.5" fill={color} stroke="#fff" strokeWidth="2.5"/>
+      <circle cx={x} cy={y} r="3" fill={color}/>
+      <g transform={`translate(${x},${y+13})`}>
+        <rect x={-(label.length*3.6+9)} y={0} width={label.length*7.2+18} height={21} rx={10.5} fill="#0f172a"/>
+        <text x={0} y={14.5} textAnchor="middle" fontSize="11.5" fill="#fff" fontWeight="600">{label}</text>
+      </g>
+    </g>
+  );
+  return(
+    <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",height:"auto",display:"block",borderRadius:12,background:"linear-gradient(180deg,#f5fbf8,#eaf4ee)",border:"1px solid #e0ede7",marginBottom:14}}>
+      {grid}
+      <path d={`M ${ox} ${oy} Q ${mx} ${my} ${dx} ${dy}`} fill="none" stroke={G} strokeWidth="2.5" strokeDasharray="8 7" strokeLinecap="round"/>
+      {pin(ox,oy,G,o.short)}
+      {pin(dx,dy,"#0f172a",d.short)}
+      <g transform={`translate(${mx},${my})`}>
+        <circle r="15" fill="#fff" stroke={G} strokeWidth="2"/>
+        <text x="0" y="5" textAnchor="middle" fontSize="15">✈️</text>
+        {dist!=null&&<g transform="translate(0,-24)"><rect x={-34} y={-10} width={68} height={20} rx={10} fill={G}/><text x={0} y={4} textAnchor="middle" fontSize="11" fill="#fff" fontWeight="700">{dist.toLocaleString()} km</text></g>}
+      </g>
+    </svg>
+  );
+}
+
+function DeliveryScreen({loc,item,destKey,onClaim}){
   const[tab,setTab]=useState("local");
   const[dest,setDest]=useState("");
   const locData=LOCS[loc]||LOCS.atlanta;
+  const[delTo,setDelTo]=useState(destKey||loc);
+  const[picked,setPicked]=useState(0);
+  const sug=item?getDeliverySuggestions(item,item.location_key||loc,delTo):null;
+  const chosen=sug?sug.options[picked]:null;
 
   const DC=({o})=>(
     <div style={{...card,padding:16,marginBottom:12,borderWidth:o.rec?2:1,borderColor:o.rec?G:"#e0ede7"}}>
@@ -1080,20 +1458,88 @@ function DeliveryScreen({loc}){
 
   return<div style={{padding:"16px 20px"}}>
     <SecHead>Delivery Options</SecHead>
-    <Alert><strong>Shipping from: {locData.label}</strong> — recommendations tailored to your region. For overseas deliveries, open the International tab and select your destination country.</Alert>
-    <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
-      {[["local","Local / Domestic"],["intl","International"],["cold","Cold Chain"],["bulk","Bulk / Freight"]].map(([id,label])=>(
-        <button key={id} onClick={()=>setTab(id)} style={{padding:"7px 17px",borderRadius:99,border:tab===id?"none":"1px solid #e0ede7",background:tab===id?G:"#fff",color:tab===id?"#fff":"#64748b",fontSize:13,fontWeight:tab===id?700:400,cursor:"pointer"}}>{label}</button>
-      ))}
-    </div>
-    {tab==="local"&&local.map((o,i)=><DC key={i} o={o}/>)}
-    {tab==="intl"&&<div>
-      <Alert type="blue">Shipping from <strong>{locData.short}</strong>. Select your destination country to see recommended carriers, estimated transit times, and customs guidance specific to that route.</Alert>
-      <TSel label="Destination country" value={dest} onChange={e=>setDest(e.target.value)} options={[{v:"",l:"Select destination country..."},{v:"uk",l:"United Kingdom"},{v:"ng",l:"Nigeria"},{v:"jp",l:"Japan"},{v:"br",l:"Brazil"},{v:"au",l:"Australia"},{v:"de",l:"Germany"},{v:"in",l:"India"}]} style={{maxWidth:340,marginBottom:16}}/>
-      {dest?(INTL_CARRIERS[dest]||[]).map((o,i)=><DC key={i} o={{...o,icon:i===0?"🚀":i===1?"🚢":"📦",name:o.name,sub:`Est. ${o.eta} · ${locData.short} to destination`,rec:o.rec,recLabel:"Best route for this destination"}}/>):<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}>Select a destination country to see carrier options</div>}
+
+    {sug&&<div style={{marginBottom:24}}>
+      <div style={{...card,padding:18,marginBottom:16,background:"linear-gradient(135deg,#f0fdf4,#ffffff)",borderColor:G4}}>
+        <div style={{fontSize:11,fontWeight:700,color:G2,letterSpacing:.5,textTransform:"uppercase",marginBottom:8}}>Delivery for this item</div>
+        <div style={{fontSize:15,fontWeight:700,color:"#0f172a",marginBottom:14}}>{item.title}</div>
+        <div style={{display:"flex",gap:14,flexWrap:"wrap",alignItems:"flex-end"}}>
+          <div>
+            <div style={{fontSize:10,color:"#94a3b8",textTransform:"uppercase",letterSpacing:.4,marginBottom:5}}>From (donor)</div>
+            <div style={{fontSize:14,fontWeight:600,color:"#0f172a"}}>📍 {sug.originShort}</div>
+          </div>
+          <div style={{fontSize:18,color:"#cbd5e1",paddingBottom:1}}>→</div>
+          <div style={{minWidth:210}}>
+            <div style={{fontSize:10,color:"#94a3b8",textTransform:"uppercase",letterSpacing:.4,marginBottom:5}}>Deliver to</div>
+            <select value={delTo} onChange={e=>{setDelTo(e.target.value);setPicked(0);}} style={{...inp,padding:"8px 12px",fontWeight:600,cursor:"pointer"}}>
+              {Object.entries(LOCS).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+            </select>
+          </div>
+        </div>
+        <div style={{fontSize:12.5,color:"#475569",marginTop:14,paddingTop:12,borderTop:"1px solid #e0ede7"}}>
+          {sug.routeType==="local"?"📦 Same city — local pickup possible":sug.dist!=null?`✈️ ~${sug.dist.toLocaleString()} km`:""}
+          {sug.routeType!=="local"&&<span> · {sug.routeType==="domestic"?"Domestic":"International"}</span>}
+          {sug.kg&&<span> · ~{sug.kg} kg est.</span>}
+        </div>
+      </div>
+
+      <div style={{fontSize:13,fontWeight:700,color:"#0f172a",margin:"0 2px 10px"}}>Choose a delivery option</div>
+      <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:16}}>
+        {sug.options.map((o,i)=>(
+          <button key={i} onClick={()=>setPicked(i)} style={{textAlign:"left",cursor:"pointer",display:"flex",alignItems:"center",gap:12,padding:"12px 14px",borderRadius:12,width:"100%",fontFamily:"inherit",transition:"all .15s",border:picked===i?`2px solid ${G}`:"1px solid #e0ede7",background:picked===i?"#f0fdf4":"#fff"}}>
+            <div style={{width:46,height:46,borderRadius:10,background:"#f0fbf5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,border:"1px solid #e0ede7",flexShrink:0}}>{o.icon}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:14,fontWeight:700,color:"#0f172a",display:"flex",alignItems:"center",gap:7}}>{o.name}{o.rec&&<span style={{fontSize:9.5,background:G,color:"#fff",padding:"1px 7px",borderRadius:99,fontWeight:700}}>✓ RECOMMENDED</span>}</div>
+              <div style={{fontSize:12,color:"#64748b",marginTop:2}}>{o.eta} · {o.sub}</div>
+            </div>
+            <div style={{textAlign:"right",flexShrink:0}}>
+              <div style={{fontSize:16,fontWeight:700,color:"#0f172a"}}>{o.price}</div>
+              <div style={{fontSize:11,fontWeight:600,color:picked===i?G2:"#cbd5e1"}}>{picked===i?"✓ Selected":"Tap to view"}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {chosen&&<div style={{...card,padding:18,borderColor:G4}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,flexWrap:"wrap",gap:8}}>
+          <div style={{fontSize:15,fontWeight:700,color:"#0f172a"}}>{chosen.icon} {chosen.name}</div>
+          <div style={{fontSize:13,color:"#475569"}}><strong style={{color:"#0f172a"}}>{chosen.price}</strong> · {chosen.eta}</div>
+        </div>
+        <div style={{display:"flex",gap:24,flexWrap:"wrap"}}>
+          <div style={{flex:1,minWidth:170}}>
+            <div style={{fontSize:10.5,fontWeight:700,color:G2,letterSpacing:.4,textTransform:"uppercase",marginBottom:8}}>👍 Pros</div>
+            {(chosen.feats||[]).map(p=><div key={p} style={{fontSize:13,color:"#374151",marginBottom:5,display:"flex",gap:7}}><span style={{color:G}}>✓</span>{p}</div>)}
+          </div>
+          <div style={{flex:1,minWidth:170}}>
+            <div style={{fontSize:10.5,fontWeight:700,color:"#b45309",letterSpacing:.4,textTransform:"uppercase",marginBottom:8}}>👎 Cons</div>
+            {(chosen.cons||["—"]).map(c=><div key={c} style={{fontSize:13,color:"#374151",marginBottom:5,display:"flex",gap:7}}><span style={{color:"#f59e0b"}}>–</span>{c}</div>)}
+          </div>
+        </div>
+        <div style={{display:"flex",gap:10,flexWrap:"wrap",marginTop:16}}>
+          {chosen.url&&<a href={chosen.url} target="_blank" rel="noopener noreferrer" style={{flex:1,minWidth:150,textAlign:"center",padding:"11px 0",borderRadius:10,border:`1px solid ${G}`,color:G,fontSize:13.5,fontWeight:700,textDecoration:"none",background:"#fff"}}>Arrange on {chosen.name} ↗</a>}
+          {onClaim&&item.listing_type!=="buy"&&<button onClick={()=>onClaim(item,chosen.name)} style={{flex:1,minWidth:150,padding:"11px 0",borderRadius:10,background:G,color:"#fff",border:"none",fontSize:13.5,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}} onMouseEnter={e=>e.currentTarget.style.background=G2} onMouseLeave={e=>e.currentTarget.style.background=G}>Claim with {chosen.name} →</button>}
+        </div>
+      </div>}
+
+      <div style={{fontSize:11.5,color:"#94a3b8",margin:"14px 2px 0",lineHeight:1.6,textAlign:"center"}}>Options auto-generated from the donor's location, your chosen destination, and the item's estimated weight. Prices are estimates — use the carrier link to arrange and pay for shipping directly, or claim the item to coordinate with the donor in Messages.</div>
     </div>}
-    {tab==="cold"&&cold.map((o,i)=><DC key={i} o={o}/>)}
-    {tab==="bulk"&&bulk.map((o,i)=><DC key={i} o={o}/>)}
+
+    {!sug&&<>
+      <Alert><strong>Shipping from: {locData.label}</strong> — recommendations tailored to your region. For overseas deliveries, open the International tab and select your destination country.</Alert>
+      <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
+        {[["local","Local / Domestic"],["intl","International"],["cold","Cold Chain"],["bulk","Bulk / Freight"]].map(([id,label])=>(
+          <button key={id} onClick={()=>setTab(id)} style={{padding:"7px 17px",borderRadius:99,border:tab===id?"none":"1px solid #e0ede7",background:tab===id?G:"#fff",color:tab===id?"#fff":"#64748b",fontSize:13,fontWeight:tab===id?700:400,cursor:"pointer"}}>{label}</button>
+        ))}
+      </div>
+      {tab==="local"&&local.map((o,i)=><DC key={i} o={o}/>)}
+      {tab==="intl"&&<div>
+        <Alert type="blue">Shipping from <strong>{locData.short}</strong>. Select your destination country to see recommended carriers, estimated transit times, and customs guidance specific to that route.</Alert>
+        <TSel label="Destination country" value={dest} onChange={e=>setDest(e.target.value)} options={[{v:"",l:"Select destination country..."},{v:"uk",l:"United Kingdom"},{v:"ng",l:"Nigeria"},{v:"jp",l:"Japan"},{v:"br",l:"Brazil"},{v:"au",l:"Australia"},{v:"de",l:"Germany"},{v:"in",l:"India"}]} style={{maxWidth:340,marginBottom:16}}/>
+        {dest?(INTL_CARRIERS[dest]||[]).map((o,i)=><DC key={i} o={{...o,icon:i===0?"🚀":i===1?"🚢":"📦",name:o.name,sub:`Est. ${o.eta} · ${locData.short} to destination`,rec:o.rec,recLabel:"Best route for this destination"}}/>):<div style={{textAlign:"center",padding:"40px 0",color:"#94a3b8"}}>Select a destination country to see carrier options</div>}
+      </div>}
+      {tab==="cold"&&cold.map((o,i)=><DC key={i} o={o}/>)}
+      {tab==="bulk"&&bulk.map((o,i)=><DC key={i} o={o}/>)}
+    </>}
   </div>;
 }
 
@@ -1355,8 +1801,19 @@ function DashboardScreen({role,onGo}){
 
   const Overview=()=><div style={{padding:16}}>
     <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16}}>
-      {[["Items listed",profile?.total_listed||listings.length],["Claims received",profile?.total_claimed||claims.length],["Rating",profile?.rating>0?Number(profile.rating).toFixed(1):"—"],["Followers",profile?.follower_count||0]].map(([label,val])=>(
-        <div key={label} style={{background:"#f0fbf5",border:"1px solid #c5edd9",borderRadius:10,padding:"14px 16px"}}><div style={{fontSize:11,color:"#64748b",marginBottom:4,textTransform:"uppercase",letterSpacing:.5}}>{label}</div><div style={{fontSize:22,fontWeight:700,color:"#0f172a"}}>{val}</div></div>
+      {/* Rating card shows explanation when no rating (Evan's item 5) */}
+      {[
+        {label:"Items listed",val:profile?.total_listed||listings.length,isRating:false},
+        {label:"Claims received",val:profile?.total_claimed||claims.length,isRating:false},
+        {label:"Rating",val:profile?.rating>0?Number(profile.rating).toFixed(1):null,isRating:true},
+        {label:"Followers",val:profile?.follower_count||0,isRating:false},
+      ].map(({label,val,isRating})=>(
+        <div key={label} style={{background:"#f0fbf5",border:"1px solid #c5edd9",borderRadius:10,padding:"14px 16px"}}>
+          <div style={{fontSize:11,color:"#64748b",marginBottom:4,textTransform:"uppercase",letterSpacing:.5}}>{label}</div>
+          {isRating&&val===null
+            ?<div><div style={{fontSize:22,fontWeight:700,color:"#94a3b8"}}>—</div><div style={{fontSize:10,color:"#94a3b8",marginTop:3,lineHeight:1.5}}>No ratings yet. Complete an exchange to earn your first rating.</div></div>
+            :<div style={{fontSize:22,fontWeight:700,color:"#0f172a"}}>{val??0}</div>}
+        </div>
       ))}
     </div>
     <SecHead>Recent Conversations</SecHead>
@@ -1435,15 +1892,62 @@ function DashboardScreen({role,onGo}){
     ))}
   </div>;
 
-  const Impact=()=><div style={{padding:16}}>
-    <SecHead>Your Impact</SecHead>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:20}}>
-      <div style={{background:"#f0fbf5",border:"1px solid #c5edd9",borderRadius:10,padding:"14px 16px"}}><div style={{fontSize:11,color:"#64748b",marginBottom:4}}>Listings posted</div><div style={{fontSize:22,fontWeight:700,color:G}}>{profile?.total_listed||0}</div></div>
-      <div style={{background:"#f0fbf5",border:"1px solid #c5edd9",borderRadius:10,padding:"14px 16px"}}><div style={{fontSize:11,color:"#64748b",marginBottom:4}}>Items redistributed</div><div style={{fontSize:22,fontWeight:700,color:G}}>{profile?.total_claimed||0}</div></div>
-      <div style={{background:"#f0fbf5",border:"1px solid #c5edd9",borderRadius:10,padding:"14px 16px"}}><div style={{fontSize:11,color:"#64748b",marginBottom:4}}>Est. value donated</div><div style={{fontSize:22,fontWeight:700,color:G}}>${Number(profile?.total_value||0).toLocaleString()}</div></div>
-    </div>
-    <Alert>Every item you list keeps goods out of landfills and connects them with people who need them. Your impact grows with every listing.</Alert>
-  </div>;
+  const Impact=()=>{
+    const done=claims.filter(c=>c.status==="approved"||c.status==="completed");
+    const itemsListed=listings.length||profile?.total_listed||0;
+    const redistributed=done.length||profile?.total_claimed||0;
+    const orgsHelped=new Set(done.map(c=>c.claimant_id).filter(Boolean)).size;
+    const estValue=Number(profile?.total_value||0)||redistributed*45;
+    const co2=Math.round(redistributed*2.5);
+    const waste=Math.round(redistributed*1.8);
+    const byCat={};
+    listings.forEach(l=>{const k=l.category||"Other";byCat[k]=(byCat[k]||0)+1;});
+    const cats=Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const maxCat=cats[0]?.[1]||1;
+    const stat=(label,val)=>(
+      <div style={{background:"#f0fbf5",border:"1px solid #c5edd9",borderRadius:10,padding:"14px 16px"}}>
+        <div style={{fontSize:11,color:"#64748b",marginBottom:4,textTransform:"uppercase",letterSpacing:.4}}>{label}</div>
+        <div style={{fontSize:23,fontWeight:700,color:G}}>{val}</div>
+      </div>
+    );
+    return<div style={{padding:16}}>
+      <SecHead>Your Impact</SecHead>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:18}}>
+        {stat("Items listed",itemsListed)}
+        {stat("Items redistributed",redistributed)}
+        {stat("Organizations helped",orgsHelped)}
+        {stat("Est. value donated","$"+estValue.toLocaleString())}
+      </div>
+
+      <div style={{...card,padding:18,marginBottom:18}}>
+        <div style={{fontSize:14,fontWeight:700,color:"#0f172a",marginBottom:4}}>🌱 Environmental impact</div>
+        <div style={{fontSize:12,color:"#94a3b8",marginBottom:14}}>Estimated from items redistributed through your listings.</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+          <div style={{padding:"14px 16px",background:"#f0fdf4",borderRadius:10,border:`1px solid ${G4}`}}>
+            <div style={{fontSize:22,fontWeight:700,color:G2}}>{co2.toLocaleString()} kg</div>
+            <div style={{fontSize:12,color:"#475569"}}>CO₂e emissions avoided</div>
+          </div>
+          <div style={{padding:"14px 16px",background:"#f0fdf4",borderRadius:10,border:`1px solid ${G4}`}}>
+            <div style={{fontSize:22,fontWeight:700,color:G2}}>{waste.toLocaleString()} kg</div>
+            <div style={{fontSize:12,color:"#475569"}}>Waste diverted from landfill</div>
+          </div>
+        </div>
+        <div style={{fontSize:11,color:"#94a3b8",marginTop:10,lineHeight:1.6}}>Estimates use ~2.5 kg CO₂e and ~1.8 kg landfill avoided per reused item — indicative reporting only.</div>
+      </div>
+
+      {cats.length>0&&<div style={{...card,padding:18,marginBottom:18}}>
+        <div style={{fontSize:14,fontWeight:700,color:"#0f172a",marginBottom:14}}>What you've listed</div>
+        {cats.map(([name,count])=>(
+          <div key={name} style={{marginBottom:11}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}><span style={{color:"#374151",fontWeight:600}}>{name}</span><span style={{color:"#64748b"}}>{count}</span></div>
+            <div style={{height:8,background:"#eef2f7",borderRadius:99,overflow:"hidden"}}><div style={{height:"100%",width:`${Math.round(count/maxCat*100)}%`,background:G,borderRadius:99}}/></div>
+          </div>
+        ))}
+      </div>}
+
+      <Alert>Every item you list keeps goods out of landfills and connects them with people who need them. Share these numbers in your ESG or sustainability report — your impact grows with every listing.</Alert>
+    </div>;
+  };
 
   const Settings=()=>{
     const[pf,setPf]=useState({display_name:profile?.display_name||"",org_name:profile?.org_name||"",bio:profile?.bio||"",website:profile?.website||"",city:profile?.city||"",country:profile?.country||"",primary_industry:profile?.primary_industry||""});
@@ -1556,10 +2060,12 @@ function StoreScreen({profileData,onMsg,onGo}){
 
 // ─── ROOT APP ─────────────────────────────────────────────────────────────────
 function AppContent(){
-  const{user,profile,loading}=useAuth();
+  const{user,profile,loading,recovery}=useAuth();
   const[screen,setScreen]=useState("home");
   const[screenData,setScreenData]=useState(null);
   const[loc,setLoc]=useState("atlanta");
+  const[helpOpen,setHelpOpen]=useState(false);
+  const[staticPage,setStaticPage]=useState(null);
   const[role,setRole]=useState("vendor");
   const[unread,setUnread]=useState(0);
 
@@ -1573,10 +2079,10 @@ function AppContent(){
     return()=>supabase.removeChannel(sub);
   },[user]);
 
-  const handleClaim=useCallback(async listing=>{
+  const handleClaim=useCallback(async(listing,deliveryMethod)=>{
     if(!user){go("auth");return;}
     if(user.id===listing.user_id)return; // owners cannot claim their own listing
-    await supabase.from("claims").insert({listing_id:listing.id,claimant_id:user.id,vendor_id:listing.user_id,status:"pending"});
+    await supabase.from("claims").insert({listing_id:listing.id,claimant_id:user.id,vendor_id:listing.user_id,status:"pending",delivery_method:deliveryMethod||null});
     await supabase.rpc("get_or_create_conversation",{other_user_id:listing.user_id,p_listing_id:listing.id});
     go("msgs");
   },[user,go]);
@@ -1595,6 +2101,9 @@ function AppContent(){
   useEffect(()=>{if(oauthLanding&&user){window.history.replaceState({},"",window.location.pathname);go("dash");}},[oauthLanding,user,go]);
 
   if(loading)return<div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",fontFamily:"'Inter',system-ui,sans-serif",flexDirection:"column",gap:14}}><div style={{width:36,height:36,borderRadius:"50%",border:`3px solid #e5e7eb`,borderTopColor:G,animation:"spin .8s linear infinite"}}/><span style={{fontSize:13,color:MUTED,letterSpacing:".02em"}}>Loading UpGive…</span></div>;
+
+  // After clicking the reset link in the email, show the new-password screen.
+  if(recovery)return<ResetPasswordScreen/>;
 
   return(
     <>
@@ -1654,6 +2163,7 @@ function AppContent(){
 
           {/* Auth */}
           <div style={{display:"flex",alignItems:"center",gap:8,marginLeft:4,flexShrink:0}}>
+            <button onClick={()=>setHelpOpen(true)} title="Help & FAQ" style={{width:30,height:30,borderRadius:"50%",border:`1px solid ${BORDER}`,background:"#fff",cursor:"pointer",fontSize:14,fontWeight:700,color:MUTED,display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=G;e.currentTarget.style.color=G;}} onMouseLeave={e=>{e.currentTarget.style.borderColor=BORDER;e.currentTarget.style.color=MUTED;}}>?</button>
             {user
               ?<div onClick={()=>go("dash")} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:8,padding:"4px 8px",borderRadius:8,border:`1px solid ${BORDER}`,transition:"border-color .15s"}} onMouseEnter={e=>e.currentTarget.style.borderColor=G} onMouseLeave={e=>e.currentTarget.style.borderColor=BORDER}>
                   <Av url={profile?.avatar_url} init={profile?.display_name||"?"} size={26}/>
@@ -1679,10 +2189,10 @@ function AppContent(){
         <div className="pg" key={screen}>
           {screen==="home"     &&(user?<HomeScreen loc={loc} onGo={go} onClaim={handleClaim} onMsg={handleMsg}/>:<LandingScreen onGo={go}/>)}
           {screen==="market"   &&<MarketScreen onClaim={handleClaim} onView={l=>go("listing",l)} onMsg={handleMsg}/>}
-          {screen==="local"     &&<LocalScreen loc={loc} onGoStore={org=>go("store",org)}/>}
+          {screen==="local"     &&<LocalScreen loc={loc} onGoStore={org=>go("store",org)} onGo={go}/>}
           {screen==="community" &&<CommunityScreen onGo={go}/>}
-          {screen==="msgs"      &&<MessagesScreen onGoDelivery={()=>go("delivery")}/>}
-          {screen==="delivery"  &&<DeliveryScreen loc={loc}/>}
+          {screen==="msgs"      &&<MessagesScreen onGoDelivery={()=>go("delivery")} onGo={go}/>}
+          {screen==="delivery"  &&<DeliveryScreen loc={loc} item={screenData} destKey={loc} onClaim={handleClaim}/>}
           {screen==="dash"      &&<DashboardScreen role={role} onGo={go}/>}
           {screen==="store"     &&<StoreScreen profileData={screenData} onMsg={()=>go("msgs")} onGo={go}/>}
           {screen==="list"      &&<ListScreen onGo={go} defaultType={screenData?.listingType}/>}
@@ -1713,13 +2223,17 @@ function AppContent(){
                   :<div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
                       {screenData.listing_type!=="buy"&&<Btn v="primary" sz="lg" onClick={()=>handleClaim(screenData)}>Claim This Item</Btn>}
                       <Btn v="outline" sz="lg" onClick={()=>handleMsg(screenData)}>Message Donor</Btn>
-                      <Btn v="outline" sz="lg" onClick={()=>go("delivery")}>Delivery Options</Btn>
+                      <Btn v="outline" sz="lg" onClick={()=>go("delivery",screenData)}>Delivery Options</Btn>
                     </div>}
 
               </div>
             </div>
           )}
         </div>
+
+        <Footer onOpenPage={setStaticPage}/>
+        {helpOpen&&<HelpModal onClose={()=>setHelpOpen(false)}/>}
+        {staticPage&&<StaticPageModal page={staticPage} onClose={()=>setStaticPage(null)}/>}
       </div>
     </>
   );
