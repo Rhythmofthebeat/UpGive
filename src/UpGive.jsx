@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, useCallback, createContext, useContext } f
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // ─── CONFIG ── Replace with your Supabase project values ──────────────────────
-const SUPABASE_URL      = "https://ndzvsdoqrnldqjiokauv.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kenZzZG9xcm5sZHFqaW9rYXV2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwMDYzMzYsImV4cCI6MjA5NjU4MjMzNn0.kkIFx-dUgGxpvNwaAVGu9HAHgBVfKgs1bGygKkDKacM";
+const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
