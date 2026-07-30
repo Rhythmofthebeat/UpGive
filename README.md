@@ -6,7 +6,7 @@ Surplus goods marketplace connecting every industry worldwide.
 
 1. Run `npm install`
 2. Run `npm run dev`
-3. Open http://localhost:5173
+3. Open upgive.org
 
 ## Supabase
 - Project: fzqgwccgtblxqzcfsvmw
