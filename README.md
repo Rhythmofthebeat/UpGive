@@ -1,4 +1,4 @@
-# TrueVine
+# UpGive
 
 Surplus goods marketplace connecting every industry worldwide.
 
