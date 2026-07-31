@@ -1613,37 +1613,69 @@ function AppContent(){
         .nav-link{transition:color .15s,background .15s}
         .nav-link:hover{color:#111827!important;background:#f9fafb!important}
         .nav-link.active{color:#15803d!important;background:#f0fdf4!important;font-weight:600!important}
+        button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid rgba(22,163,74,.28)!important;outline-offset:2px}
+        .mobile-nav-scroll{scrollbar-width:none}
+        .mobile-nav-scroll::-webkit-scrollbar{display:none}
+        @media(max-width:1100px){
+          .top-nav{padding-inline:16px!important;gap:6px!important}
+          .top-search{max-width:260px!important}
+          .top-mode{display:none!important}
+          .top-nav-links{overflow-x:auto;scrollbar-width:none}
+          .top-nav-links::-webkit-scrollbar{display:none}
+          .top-nav-links .nav-link{padding-inline:9px!important}
+          .top-account-name{display:none!important}
+        }
+        @media(max-width:760px){
+          .top-nav{height:auto!important;min-height:60px;padding:10px 12px!important;flex-wrap:wrap!important}
+          .top-logo{margin-right:auto!important}
+          .top-search{order:3;max-width:none!important;flex-basis:100%!important}
+          .top-nav-links{position:fixed!important;z-index:120!important;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);backdrop-filter:blur(14px);border-top:1px solid #e5e7eb;padding:7px 8px max(7px,env(safe-area-inset-bottom));justify-content:flex-start!important;box-shadow:0 -8px 30px rgba(15,23,42,.08)}
+          .top-nav-links .nav-link{min-height:40px!important;justify-content:center!important;flex:1 0 auto!important}
+          .top-auth .list-item-label{display:none}
+          .location-bar{padding:7px 12px!important}
+          .location-meta{display:none!important}
+          .pg{padding-bottom:66px}
+        }
+        @media(max-width:430px){
+          .top-auth{gap:5px!important}
+          .top-auth button{padding-inline:10px!important}
+          .top-logo-tagline{display:none}
+          .location-bar strong{max-width:145px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        }
+        @media(prefers-reduced-motion:reduce){
+          *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+        }
       `}</style>
       <div style={{fontFamily:"'Inter',system-ui,sans-serif",background:"#f9fafb",minHeight:"100vh"}}>
 
         {/* ── TOP NAV ── */}
-        <nav style={{background:"#fff",borderBottom:`1px solid ${BORDER}`,padding:"0 28px",display:"flex",alignItems:"center",gap:8,height:64,position:"sticky",top:0,zIndex:100,boxShadow:"0 1px 0 rgba(0,0,0,.06)"}}>
+        <nav className="top-nav" aria-label="Primary navigation" style={{background:"#fff",borderBottom:`1px solid ${BORDER}`,padding:"0 28px",display:"flex",alignItems:"center",gap:8,height:64,position:"sticky",top:0,zIndex:100,boxShadow:"0 1px 0 rgba(0,0,0,.06)"}}>
           {/* Logo */}
-          <div style={{cursor:"pointer",flexShrink:0,marginRight:16,display:"flex",alignItems:"center",gap:8}} onClick={()=>go("home")}>
+          <div className="top-logo" role="button" tabIndex={0} aria-label="Go to UpGive home" style={{cursor:"pointer",flexShrink:0,marginRight:16,display:"flex",alignItems:"center",gap:8}} onClick={()=>go("home")} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go("home");}}}>
             <div style={{width:32,height:32,borderRadius:8,background:G,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2C8 2 3 5 3 9a5 5 0 0010 0C13 5 8 2 8 2z" fill="rgba(255,255,255,.9)"/><path d="M8 7v5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round"/></svg>
             </div>
             <div>
               <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:TEXT,letterSpacing:"-0.3px",lineHeight:1.1}}>UpGive</div>
-              <div style={{fontSize:9,color:MUTED,letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:500}}>Surplus for Good</div>
+              <div className="top-logo-tagline" style={{fontSize:9,color:MUTED,letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:500}}>Surplus for Good</div>
             </div>
           </div>
 
           {/* Search */}
-          <div style={{flex:1,maxWidth:400,position:"relative"}}>
+          <div className="top-search" style={{flex:1,maxWidth:400,position:"relative"}}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{position:"absolute",left:11,top:"50%",transform:"translateY(-50%)",pointerEvents:"none",flexShrink:0}}><circle cx="5.5" cy="5.5" r="3.75" stroke="#9ca3af" strokeWidth="1.5"/><line x1="8.5" y1="8.5" x2="12" y2="12" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            <input placeholder="Search goods, organizations…" onKeyDown={e=>{if(e.key==="Enter")go("market");}} style={{width:"100%",height:36,border:`1px solid ${BORDER}`,borderRadius:8,padding:"0 14px 0 34px",fontSize:13,background:"#f9fafb",outline:"none",color:TEXT,transition:"border-color .15s,box-shadow .15s"}} onFocus={e=>{e.target.style.borderColor=G;e.target.style.boxShadow="0 0 0 3px rgba(22,163,74,.1)";e.target.style.background="#fff";}} onBlur={e=>{e.target.style.borderColor=BORDER;e.target.style.boxShadow="none";e.target.style.background="#f9fafb";}}/>
+            <input aria-label="Search goods and organizations" placeholder="Search goods, organizations…" onKeyDown={e=>{if(e.key==="Enter")go("market");}} style={{width:"100%",height:36,border:`1px solid ${BORDER}`,borderRadius:8,padding:"0 14px 0 34px",fontSize:13,background:"#f9fafb",outline:"none",color:TEXT,transition:"border-color .15s,box-shadow .15s"}} onFocus={e=>{e.target.style.borderColor=G;e.target.style.boxShadow="0 0 0 3px rgba(22,163,74,.1)";e.target.style.background="#fff";}} onBlur={e=>{e.target.style.borderColor=BORDER;e.target.style.boxShadow="none";e.target.style.background="#f9fafb";}}/>
           </div>
 
           {/* Mode toggle */}
-          <div style={{display:"flex",background:"#f3f4f6",borderRadius:7,padding:2,flexShrink:0,border:`1px solid ${BORDER}`}}>
+          <div className="top-mode" style={{display:"flex",background:"#f3f4f6",borderRadius:7,padding:2,flexShrink:0,border:`1px solid ${BORDER}`}}>
             {[["vendor","Donor"],["client","Recipient"]].map(([r,label])=>(
               <button key={r} onClick={()=>setRole(r)} style={{padding:"4px 13px",borderRadius:5,border:"none",background:role===r?"#fff":"transparent",color:role===r?G:MUTED,fontSize:11,fontWeight:role===r?600:400,cursor:"pointer",transition:"all .15s",boxShadow:role===r?"0 1px 3px rgba(0,0,0,.1)":""}}>{label}</button>
             ))}
           </div>
 
           {/* Nav links */}
-          <div style={{display:"flex",alignItems:"center",gap:1}}>
+          <div className="top-nav-links mobile-nav-scroll" style={{display:"flex",alignItems:"center",gap:1}}>
             {navItems.map(item=>(
               <button key={item.id} onClick={()=>{go(item.id);if(item.id==="msgs")setUnread(0);}} className={`nav-link${screen===item.id?" active":""}`} style={{padding:"7px 11px",borderRadius:7,border:"none",background:screen===item.id?"#f0fdf4":"transparent",color:screen===item.id?G2:MUTED,fontSize:12,fontWeight:screen===item.id?600:400,cursor:"pointer",display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap",position:"relative"}}>
                 {item.label}
@@ -1653,26 +1685,26 @@ function AppContent(){
           </div>
 
           {/* Auth */}
-          <div style={{display:"flex",alignItems:"center",gap:8,marginLeft:4,flexShrink:0}}>
+          <div className="top-auth" style={{display:"flex",alignItems:"center",gap:8,marginLeft:4,flexShrink:0}}>
             {user
               ?<div onClick={()=>go("dash")} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:8,padding:"4px 8px",borderRadius:8,border:`1px solid ${BORDER}`,transition:"border-color .15s"}} onMouseEnter={e=>e.currentTarget.style.borderColor=G} onMouseLeave={e=>e.currentTarget.style.borderColor=BORDER}>
                   <Av url={profile?.avatar_url} init={profile?.display_name||"?"} size={26}/>
-                  <span style={{fontSize:12,fontWeight:500,color:TEXT,maxWidth:100,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile?.display_name||"Account"}</span>
+                  <span className="top-account-name" style={{fontSize:12,fontWeight:500,color:TEXT,maxWidth:100,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profile?.display_name||"Account"}</span>
                 </div>
               :<button onClick={()=>go("auth")} style={{padding:"7px 16px",borderRadius:7,border:`1px solid ${BORDER}`,background:"#fff",fontSize:12,fontWeight:500,cursor:"pointer",color:TEXT,transition:"border-color .15s"}} onMouseEnter={e=>e.currentTarget.style.borderColor="#9ca3af"} onMouseLeave={e=>e.currentTarget.style.borderColor=BORDER}>Sign in</button>}
-            <button onClick={()=>go("list")} style={{padding:"8px 18px",borderRadius:7,border:"none",background:G,color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer",transition:"background .15s",letterSpacing:".01em",boxShadow:"0 1px 2px rgba(22,163,74,.2)"}} onMouseEnter={e=>e.currentTarget.style.background=G2} onMouseLeave={e=>e.currentTarget.style.background=G}>List Item</button>
+            <button onClick={()=>go("list")} style={{padding:"8px 18px",borderRadius:7,border:"none",background:G,color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer",transition:"background .15s",letterSpacing:".01em",boxShadow:"0 1px 2px rgba(22,163,74,.2)"}} onMouseEnter={e=>e.currentTarget.style.background=G2} onMouseLeave={e=>e.currentTarget.style.background=G}><span className="list-item-label">List </span>Item</button>
           </div>
         </nav>
 
         {/* ── LOCATION BAR ── */}
-        <div style={{background:"#111827",padding:"7px 28px",display:"flex",alignItems:"center",gap:10,fontSize:12}}>
+        <div className="location-bar" style={{background:"#111827",padding:"7px 28px",display:"flex",alignItems:"center",gap:10,fontSize:12}}>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{flexShrink:0}}><circle cx="6" cy="5" r="2.5" stroke="#9ca3af" strokeWidth="1.2"/><path d="M6 1C3.79 1 2 2.79 2 5c0 3 4 7 4 7s4-4 4-7c0-2.21-1.79-4-4-4z" stroke="#9ca3af" strokeWidth="1.2" fill="none"/></svg>
           <span style={{color:"#9ca3af"}}>Location:</span>
           <strong style={{color:"#fff",fontWeight:500}}>{locData.label}</strong>
           <select value={loc} onChange={e=>setLoc(e.target.value)} style={{background:"none",border:"none",color:"#6b7280",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>
             {Object.entries(LOCS).map(([k,v])=><option key={k} value={k} style={{background:"#1f2937",color:"#fff"}}>{v.label}</option>)}
           </select>
-          <span style={{marginLeft:"auto",fontSize:11,color:"#6b7280"}}>{role==="vendor"?"Donor view":"Recipient view"} · {locData.tz}</span>
+          <span className="location-meta" style={{marginLeft:"auto",fontSize:11,color:"#6b7280"}}>{role==="vendor"?"Donor view":"Recipient view"} · {locData.tz}</span>
         </div>
 
         {/* SCREENS */}
