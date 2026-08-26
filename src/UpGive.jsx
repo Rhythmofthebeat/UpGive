@@ -258,7 +258,7 @@ function AuthScreen({onSuccess}){
   if(mode==="login")return(
     <div style={{display:"flex",justifyContent:"center",padding:40}}>
       <div style={{...card,padding:36,width:360,boxShadow:"0 4px 24px rgba(0,0,0,.07),0 1px 4px rgba(0,0,0,.04)"}}>
-        <div style={{textAlign:"center",marginBottom:28}}><div style={{fontFamily:"'DM Serif Display',serif",fontSize:22,color:G,letterSpacing:"-0.5px",marginBottom:12}}>UpGive</div><h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:26,color:"#0f172a",margin:"0 0 6px",letterSpacing:"-.3px"}}>Welcome Back</h2><p style={{fontSize:13,color:"#64748b",margin:0,lineHeight:1.6}}>Sign in to your account</p></div>
+        <div style={{textAlign:"center",marginBottom:28}}><div style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:22,color:G,letterSpacing:"-0.5px",marginBottom:12}}>UpGive</div><h2 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:26,color:"#0f172a",margin:"0 0 6px",letterSpacing:"-.3px"}}>Welcome Back</h2><p style={{fontSize:13,color:"#64748b",margin:0,lineHeight:1.6}}>Sign in to your account</p></div>
         {error&&<Alert type="red" icon="⚠️">{error}</Alert>}
         <form onSubmit={handleLogin}>
           <TInp label="Email" type="email" placeholder="you@org.com" value={form.email} onChange={set("email")} required style={{marginBottom:10}}/>
@@ -275,7 +275,7 @@ function AuthScreen({onSuccess}){
   return(
     <div style={{display:"flex",justifyContent:"center",padding:40}}>
       <div style={{...card,padding:36,width:440,boxShadow:"0 4px 24px rgba(0,0,0,.07),0 1px 4px rgba(0,0,0,.04)"}}>
-        <div style={{textAlign:"center",marginBottom:22}}><div style={{fontSize:30,marginBottom:8}}>💚</div><h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:22,color:"#0f172a",margin:"0 0 5px",letterSpacing:"-.2px"}}>Join the Movement</h2><p style={{fontSize:12,color:"#64748b",margin:0,lineHeight:1.65}}>Give surplus a second life — connect with communities who need it most</p></div>
+        <div style={{textAlign:"center",marginBottom:22}}><div style={{fontSize:30,marginBottom:8}}>💚</div><h2 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:22,color:"#0f172a",margin:"0 0 5px",letterSpacing:"-.2px"}}>Join the Movement</h2><p style={{fontSize:12,color:"#64748b",margin:0,lineHeight:1.65}}>Give your surplus a second life. Connect with communities that need it.</p></div>
         <div style={{display:"flex",marginBottom:22}}>
           {steps.map((s,i)=>(
             <div key={s} style={{flex:1,textAlign:"center",position:"relative"}}>
@@ -334,23 +334,16 @@ function LandingScreen({onGo}){
     {value:"$1.1T",unit:"In surplus inventory",label:"held by US companies at any given time",source:"National Retail Federation 2023"},
   ];
   const problems=[
-    {title:"Companies want to give — but lack the mechanism",body:"Over 80% of corporate sustainability officers report having surplus goods they cannot efficiently donate. Without compliance tools, recipient verification, and logistics coordination, most goods end up in landfills or incinerators instead of reaching communities.",stat:"80%",statLabel:"of companies lack a structured surplus donation process"},
-    {title:"Nonprofits need goods — but can't source them efficiently",body:"NGOs, schools, clinics, and community organizations spend 35–60% of their operating budgets procuring basic supplies. Meanwhile, corporations pay disposal fees to destroy identical items — a trillion-dollar coordination failure.",stat:"$240B",statLabel:"spent annually by nonprofits on goods procurement"},
-    {title:"The planet pays the price",body:"Electronic waste contains mercury, lead, and cadmium. 75% of it is improperly disposed of. Each laptop that reaches a landfill instead of being reused carries a 300+ kg CO₂-equivalent footprint — a cost borne by everyone.",stat:"75%",statLabel:"of global e-waste is improperly disposed of"},
+    {title:"Companies want to give, but don't have a good way to do it",body:"Most corporate sustainability teams have surplus goods sitting around with nowhere good to send them. Without an easy way to verify recipients and coordinate logistics, a lot of it ends up in a landfill instead of somewhere useful.",stat:"80%",statLabel:"of companies lack a structured surplus donation process"},
+    {title:"Nonprofits need goods, but sourcing them is a slog",body:"NGOs, schools, clinics, and community groups spend 35 to 60% of their budgets just procuring basic supplies, while companies nearby are paying to throw out the same items.",stat:"$240B",statLabel:"spent annually by nonprofits on goods procurement"},
+    {title:"The planet pays the price",body:"Electronic waste contains mercury, lead, and cadmium, and about 75% of it is disposed of improperly. Every laptop that ends up in a landfill instead of being reused adds roughly 300 kg of CO2 equivalent that didn't need to happen.",stat:"75%",statLabel:"of global e-waste is improperly disposed of"},
   ];
   const steps=[
     {n:1,title:"Register your organization",body:"Companies, nonprofits, government agencies, and individuals sign up in minutes. Verified organizations receive priority matching and access to bulk listings."},
-    {n:2,title:"List or browse surplus goods",body:"Donors post surplus inventory — electronics, furniture, food, medical supplies, clothing, and more. Recipients browse, filter by location and category, and claim what they need."},
+    {n:2,title:"List or browse surplus goods",body:"Donors post what they have (electronics, furniture, food, medical supplies, clothing, and more) and recipients browse, filter by location and category, and claim what they need."},
     {n:3,title:"Coordinate, ship, measure impact",body:"Our platform handles claim coordination and delivery logistics, and provides verified impact reporting for corporate ESG disclosures and annual sustainability reports."},
   ];
-  const wasteCategories=[
-    {label:"Technology & Electronics",stat:"500M+ units/year",detail:"Laptops, servers, phones, and peripherals — the fastest-growing and most toxic waste stream on earth."},
-    {label:"Food & Beverage",stat:"1.3B tons/year",detail:"One third of all food produced globally is wasted, while 828 million people face food insecurity."},
-    {label:"Furniture & Office Goods",stat:"$16.5B/year",detail:"Desks, chairs, and fixtures discarded during office relocations and corporate refits."},
-    {label:"Medical Supplies",stat:"$765M/year",detail:"Unexpired medicines, PPE, and medical equipment that could equip clinics in underserved regions."},
-    {label:"Apparel & Textiles",stat:"92M tons/year",detail:"Unsold and returned clothing from fast fashion brands — redirectable to shelters and low-income communities."},
-    {label:"Construction Materials",stat:"$2.4B/year",detail:"Lumber, fixtures, and building materials salvageable for community housing and infrastructure projects."},
-  ];
+
   const partners=[
     {category:"Nonprofit & Humanitarian Partners",orgs:["Direct Relief","World Food Programme","Habitat for Humanity","Goodwill Industries","CARE International","Save the Children"]},
     {category:"Technology & AI Partners",orgs:["Microsoft AI for Social Good","Google.org","IBM SkillsBuild","Salesforce.org","AWS Nonprofit Credit Program","OpenAI for Good"]},
@@ -375,14 +368,14 @@ function LandingScreen({onGo}){
             <span style={{width:6,height:6,borderRadius:"50%",background:"#4ade80",flexShrink:0,boxShadow:"0 0 6px rgba(74,222,128,.8)"}}/>
             <span style={{fontSize:11,fontWeight:700,color:"#86efac",letterSpacing:2,textTransform:"uppercase"}}>Corporate Surplus Marketplace</span>
           </div>
-          <h1 style={{fontFamily:"'DM Serif Display',serif",fontSize:54,color:"#fff",margin:"0 0 22px",lineHeight:1.07,letterSpacing:"-1.5px"}}>
+          <h1 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:54,color:"#fff",margin:"0 0 22px",lineHeight:1.07,letterSpacing:"-1.5px"}}>
             Every company has surplus.<br/><em style={{color:"#4ade80",fontStyle:"italic"}}>Most of it goes to waste.</em>
           </h1>
           <p style={{color:"rgba(255,255,255,.72)",fontSize:16,margin:"0 auto 40px",maxWidth:580,lineHeight:1.9}}>
-            UpGive connects corporations and organizations with verified nonprofits, schools, and communities — turning unused inventory into measurable social impact, at zero cost.
+            UpGive connects companies and organizations with verified nonprofits, schools, and communities, turning unused inventory into real impact, at no cost.
           </p>
           <div style={{display:"flex",gap:14,justifyContent:"center",flexWrap:"wrap"}}>
-            <HeroBtn onClick={()=>onGo("auth")}>Get Started — It's Free</HeroBtn>
+            <HeroBtn onClick={()=>onGo("auth")}>Get Started, It's Free</HeroBtn>
             <HeroBtn onClick={()=>onGo("market")} outline>Browse Available Goods</HeroBtn>
           </div>
         </div>
@@ -393,7 +386,7 @@ function LandingScreen({onGo}){
         <div style={{maxWidth:1040,margin:"0 auto",display:"grid",gridTemplateColumns:"repeat(4,1fr)",borderLeft:"1px solid #e2e8f0"}}>
           {stats.map(s=>(
             <div key={s.label} style={{padding:"30px 24px",borderRight:"1px solid #e2e8f0",borderBottom:"3px solid transparent",transition:"border-color .18s"}} onMouseEnter={e=>e.currentTarget.style.borderBottomColor=G} onMouseLeave={e=>e.currentTarget.style.borderBottomColor="transparent"}>
-              <div style={{fontSize:34,fontWeight:800,color:"#0f172a",fontFamily:"'DM Serif Display',serif",letterSpacing:"-1.5px",lineHeight:1}}>{s.value}</div>
+              <div style={{fontSize:34,fontWeight:800,color:"#0f172a",fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",letterSpacing:"-1.5px",lineHeight:1}}>{s.value}</div>
               <div style={{fontSize:10,fontWeight:700,color:G,textTransform:"uppercase",letterSpacing:1.2,margin:"5px 0 8px"}}>{s.unit}</div>
               <div style={{fontSize:13,color:"#475569",lineHeight:1.6,marginBottom:8}}>{s.label}</div>
               <div style={{fontSize:10,color:"#94a3b8"}}>{s.source}</div>
@@ -407,14 +400,14 @@ function LandingScreen({onGo}){
         <div style={{maxWidth:1040,margin:"0 auto"}}>
           <div style={{textAlign:"center",marginBottom:52}}>
             <div style={{fontSize:11,fontWeight:700,color:G,textTransform:"uppercase",letterSpacing:2,marginBottom:12}}>The Problem</div>
-            <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:40,color:"#0f172a",margin:"0 0 16px",letterSpacing:"-.8px",lineHeight:1.15}}>A trillion-dollar coordination failure</h2>
-            <p style={{fontSize:15,color:"#64748b",maxWidth:540,margin:"0 auto",lineHeight:1.85}}>Corporations dispose of billions in usable goods every year. The infrastructure to connect givers with recipients has simply not existed — until now.</p>
+            <h2 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:40,color:"#0f172a",margin:"0 0 16px",letterSpacing:"-.8px",lineHeight:1.15}}>Billions in usable goods, nowhere to go</h2>
+            <p style={{fontSize:15,color:"#64748b",maxWidth:540,margin:"0 auto",lineHeight:1.85}}>Companies throw out billions of dollars in usable goods every year, mostly because there's never been a simple way to get those goods to the people who need them. That's what we're trying to fix.</p>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:24}}>
             {problems.map(p=>(
               <div key={p.title} style={{background:"#fff",border:"1px solid #e2e8f0",borderRadius:12,padding:30,position:"relative",overflow:"hidden"}}>
                 <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${G},#22c07a)`}}/>
-                <div style={{fontSize:30,fontWeight:800,color:G,fontFamily:"'DM Serif Display',serif",lineHeight:1,letterSpacing:"-1px",marginBottom:4}}>{p.stat}</div>
+                <div style={{fontSize:30,fontWeight:800,color:G,fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",lineHeight:1,letterSpacing:"-1px",marginBottom:4}}>{p.stat}</div>
                 <div style={{fontSize:11,color:"#94a3b8",marginBottom:18,textTransform:"uppercase",letterSpacing:.8}}>{p.statLabel}</div>
                 <div style={{fontSize:15,fontWeight:700,color:"#0f172a",marginBottom:12,lineHeight:1.4}}>{p.title}</div>
                 <p style={{fontSize:13,color:"#64748b",lineHeight:1.8,margin:0}}>{p.body}</p>
@@ -429,23 +422,23 @@ function LandingScreen({onGo}){
         <div style={{maxWidth:1040,margin:"0 auto"}}>
           <div style={{textAlign:"center",marginBottom:52}}>
             <div style={{fontSize:11,fontWeight:700,color:G,textTransform:"uppercase",letterSpacing:2,marginBottom:12}}>The Scale</div>
-            <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:40,color:"#0f172a",margin:"0 0 16px",letterSpacing:"-.8px",lineHeight:1.15}}>Surplus by category — what goes to waste</h2>
-            <p style={{fontSize:15,color:"#64748b",maxWidth:500,margin:"0 auto",lineHeight:1.85}}>Every category below represents goods that UpGive is built to redirect — from corporations to communities.</p>
+            <h2 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:40,color:"#0f172a",margin:"0 0 16px",letterSpacing:"-.8px",lineHeight:1.15}}>What gets wasted, by category</h2>
+            <p style={{fontSize:15,color:"#64748b",maxWidth:500,margin:"0 auto",lineHeight:1.85}}>These are the categories UpGive is built to redirect, from corporate warehouses to the people who need them.</p>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16}}>
             {[
-              {label:"Technology & Electronics",stat:"500M+ units/year",detail:"Laptops, servers, phones, and peripherals — the fastest-growing and most toxic waste stream on earth.",img:"https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=75"},
-              {label:"Food & Beverage",stat:"1.3B tons/year",detail:"One third of all food produced globally is wasted, while 828 million people face food insecurity.",img:"https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=600&q=75"},
-              {label:"Furniture & Office Goods",stat:"$16.5B/year",detail:"Desks, chairs, and fixtures discarded during office relocations and corporate refits.",img:"https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=75"},
-              {label:"Medical Supplies",stat:"$765M/year",detail:"Unexpired medicines, PPE, and medical equipment that could equip clinics in underserved regions.",img:"https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=75"},
-              {label:"Apparel & Textiles",stat:"92M tons/year",detail:"Unsold and returned clothing from fast fashion brands — redirectable to shelters and communities.",img:"https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=600&q=75"},
-              {label:"Construction Materials",stat:"$2.4B/year",detail:"Lumber, fixtures, and building materials salvageable for community housing and infrastructure.",img:"https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&q=75"},
+              {label:"Technology & Electronics",stat:"500M+ units/year",detail:"Laptops, servers, phones, and other electronics. It's the fastest-growing and most toxic waste stream we have.",img:"https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=75"},
+              {label:"Food & Beverage",stat:"1.3B tons/year",detail:"A third of all food produced globally goes to waste, while millions of people don't have enough to eat.",img:"https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=600&q=75"},
+              {label:"Furniture & Office Goods",stat:"$16.5B/year",detail:"Desks, chairs, and fixtures that get tossed during office moves and renovations.",img:"https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=75"},
+              {label:"Medical Supplies",stat:"$765M/year",detail:"Unexpired medicine, PPE, and equipment that could easily equip a clinic somewhere that needs it.",img:"https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=600&q=75"},
+              {label:"Apparel & Textiles",stat:"92M tons/year",detail:"Unsold and returned clothing from fast fashion brands that could go to shelters and communities instead.",img:"https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=600&q=75"},
+              {label:"Construction Materials",stat:"$2.4B/year",detail:"Lumber, fixtures, and building materials that are still perfectly usable for housing projects.",img:"https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&q=75"},
             ].map(c=>(
               <div key={c.label} style={{borderRadius:12,border:`1px solid ${BORDER}`,overflow:"hidden",background:"#fff",transition:"box-shadow .18s,transform .18s"}} onMouseEnter={e=>{e.currentTarget.style.boxShadow="0 8px 24px rgba(0,0,0,.10)";e.currentTarget.style.transform="translateY(-3px)";}} onMouseLeave={e=>{e.currentTarget.style.boxShadow="";e.currentTarget.style.transform="";}}>
                 <div style={{height:130,overflow:"hidden",position:"relative"}}>
                   <img src={c.img} alt={c.label} style={{width:"100%",height:"100%",objectFit:"cover"}} loading="lazy"/>
                   <div style={{position:"absolute",inset:0,background:"linear-gradient(to bottom,transparent 30%,rgba(0,0,0,.5))"}}/>
-                  <div style={{position:"absolute",bottom:10,left:12,fontSize:16,fontWeight:800,color:"#fff",fontFamily:"'DM Serif Display',serif",letterSpacing:"-.3px",lineHeight:1}}>{c.stat}</div>
+                  <div style={{position:"absolute",bottom:10,left:12,fontSize:16,fontWeight:800,color:"#fff",fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",letterSpacing:"-.3px",lineHeight:1}}>{c.stat}</div>
                 </div>
                 <div style={{padding:"14px 16px"}}>
                   <div style={{fontSize:13,fontWeight:600,color:TEXT,marginBottom:6}}>{c.label}</div>
@@ -462,12 +455,12 @@ function LandingScreen({onGo}){
         <div style={{maxWidth:900,margin:"0 auto"}}>
           <div style={{textAlign:"center",marginBottom:52}}>
             <div style={{fontSize:11,fontWeight:700,color:G,textTransform:"uppercase",letterSpacing:2,marginBottom:12}}>How It Works</div>
-            <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:40,color:"#0f172a",margin:"0 0 14px",letterSpacing:"-.8px"}}>Simple. Verified. Impactful.</h2>
+            <h2 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:40,color:"#0f172a",margin:"0 0 14px",letterSpacing:"-.8px"}}>Simple. Verified. Impactful.</h2>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:40}}>
             {steps.map(s=>(
               <div key={s.n} style={{textAlign:"center"}}>
-                <div style={{width:52,height:52,borderRadius:"50%",background:G,color:"#fff",fontSize:20,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px",fontFamily:"'DM Serif Display',serif",boxShadow:`0 4px 18px rgba(26,158,110,.28)`}}>{s.n}</div>
+                <div style={{width:52,height:52,borderRadius:"50%",background:G,color:"#fff",fontSize:20,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px",fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",boxShadow:`0 4px 18px rgba(26,158,110,.28)`}}>{s.n}</div>
                 <div style={{fontSize:15,fontWeight:700,color:"#0f172a",marginBottom:10}}>{s.title}</div>
                 <p style={{fontSize:13,color:"#64748b",lineHeight:1.8,margin:0}}>{s.body}</p>
               </div>
@@ -481,7 +474,7 @@ function LandingScreen({onGo}){
         <div style={{maxWidth:1040,margin:"0 auto"}}>
           <div style={{textAlign:"center",marginBottom:52}}>
             <div style={{fontSize:11,fontWeight:700,color:G,textTransform:"uppercase",letterSpacing:2,marginBottom:12}}>Our Network</div>
-            <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:40,color:"#0f172a",margin:"0 0 16px",letterSpacing:"-.8px"}}>Built with world-class partners</h2>
+            <h2 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:40,color:"#0f172a",margin:"0 0 16px",letterSpacing:"-.8px"}}>Built with world-class partners</h2>
             <p style={{fontSize:15,color:"#64748b",maxWidth:520,margin:"0 auto",lineHeight:1.85}}>We work alongside leading nonprofits, technology companies, and international organizations to ensure surplus goods reach the right hands, verified.</p>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:20}}>
@@ -503,8 +496,8 @@ function LandingScreen({onGo}){
       <div style={{background:"linear-gradient(135deg,#071812,#0c3a22)",padding:"88px 24px",textAlign:"center"}}>
         <div style={{maxWidth:620,margin:"0 auto"}}>
           <div style={{fontSize:11,fontWeight:700,color:"#4ade80",textTransform:"uppercase",letterSpacing:2,marginBottom:18}}>Join the Network</div>
-          <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:40,color:"#fff",margin:"0 0 18px",letterSpacing:"-.8px",lineHeight:1.15}}>Turn your surplus into someone's solution</h2>
-          <p style={{color:"rgba(255,255,255,.65)",fontSize:15,margin:"0 auto 40px",lineHeight:1.9}}>Whether you're a corporation with surplus goods, a nonprofit in need of resources, or a community organization looking to connect — UpGive is free to join and free to use.</p>
+          <h2 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:40,color:"#fff",margin:"0 0 18px",letterSpacing:"-.8px",lineHeight:1.15}}>Turn your surplus into someone's solution</h2>
+          <p style={{color:"rgba(255,255,255,.65)",fontSize:15,margin:"0 auto 40px",lineHeight:1.9}}>Whether you're a company with surplus goods, a nonprofit that needs resources, or a community group looking to connect, UpGive is free to join and free to use.</p>
           <div style={{display:"flex",gap:14,justifyContent:"center",flexWrap:"wrap",marginBottom:28}}>
             <HeroBtn onClick={()=>onGo("auth")}>Register Your Organization</HeroBtn>
             <HeroBtn onClick={()=>onGo("market")} outline>Explore the Marketplace</HeroBtn>
@@ -543,9 +536,9 @@ function HomeScreen({loc,onGo,onClaim,onMsg}){
           <span style={{width:6,height:6,borderRadius:"50%",background:"#4ade80",flexShrink:0}}/>
           <span style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,.92)",letterSpacing:2.5,textTransform:"uppercase"}}>Surplus for Good</span>
         </div>
-        <h1 style={{fontFamily:"'DM Serif Display',serif",fontSize:46,color:"#fff",margin:"0 0 16px",lineHeight:1.06}}>Turning surplus<br/><em>into community</em></h1>
+        <h1 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:46,color:"#fff",margin:"0 0 16px",lineHeight:1.06}}>Turning surplus<br/><em>into community</em></h1>
         <p style={{color:"rgba(255,255,255,.85)",fontSize:15,margin:"0 auto 28px",maxWidth:480,lineHeight:1.8}}>
-          {profile?`Welcome back, ${profile.display_name}. ${counts.listings.toLocaleString()} items waiting to make an impact.`:"Every unused item can feed a family, equip a school, or grow a business. We connect those who give with those who need — at no cost."}
+          {profile?`Welcome back, ${profile.display_name}. ${counts.listings.toLocaleString()} items are waiting for a home.`:"Every unused item can feed a family, equip a school, or grow a business. We connect the people giving with the people who need it, at no cost."}
         </p>
         <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginBottom:28}}>
           <Btn v="white" sz="lg" onClick={()=>onGo("market")}>Browse Available Goods</Btn>
@@ -563,7 +556,7 @@ function HomeScreen({loc,onGo,onClaim,onMsg}){
     <div style={{background:"#0a5433",display:"flex",flexWrap:"wrap",justifyContent:"center",borderBottom:`3px solid ${AMBER}`}}>
       {[{n:counts.listings.toLocaleString(),l:"Items shared"},{n:counts.orgs.toLocaleString(),l:"Giving organizations"},{n:"182",l:"Countries connected"},{n:"$0",l:"Always free to claim"}].map(({n,l})=>(
         <div key={l} style={{padding:"14px 22px",textAlign:"center",borderRight:"1px solid rgba(255,255,255,.1)"}}>
-          <div style={{fontSize:18,fontWeight:700,color:"#fff",fontFamily:"'DM Serif Display',serif"}}>{n}</div>
+          <div style={{fontSize:18,fontWeight:700,color:"#fff",fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif"}}>{n}</div>
           <div style={{fontSize:10,color:G4,marginTop:3,textTransform:"uppercase",letterSpacing:.8}}>{l}</div>
         </div>
       ))}
@@ -572,8 +565,8 @@ function HomeScreen({loc,onGo,onClaim,onMsg}){
     {/* ── MISSION QUOTE STRIP ── */}
     <div style={{background:`linear-gradient(135deg,${AMBER2},#fef9f0)`,borderBottom:`1px solid #fde68a`,padding:"22px 24px",textAlign:"center"}}>
       <div style={{maxWidth:580,margin:"0 auto"}}>
-        <p style={{fontFamily:"'DM Serif Display',serif",fontSize:16,fontStyle:"italic",color:"#78350f",lineHeight:1.85,margin:"0 0 8px"}}>"Every surplus item is a resource waiting to find purpose — food for a family, supplies for a school, tools for a nonprofit. Zero waste. Pure impact."</p>
-        <div style={{fontSize:10,fontWeight:700,color:AMBER,letterSpacing:2,textTransform:"uppercase"}}>UpGive — Surplus for Good</div>
+        <p style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:16,fontStyle:"italic",color:"#78350f",lineHeight:1.85,margin:"0 0 8px"}}>"Every surplus item is waiting to find its purpose: food for a family, supplies for a school, tools for a nonprofit."</p>
+        <div style={{fontSize:10,fontWeight:700,color:AMBER,letterSpacing:2,textTransform:"uppercase"}}>UpGive, Surplus for Good</div>
       </div>
     </div>
 
@@ -725,7 +718,7 @@ function MarketScreen({onClaim,onView,onMsg}){
         </div>
       </div>
 
-      {/* Listing type — radio-style */}
+      {/* Listing type: radio-style */}
       <div style={{marginBottom:16}}>
         <FL>Listing type</FL>
         {[["All","All types"],["Donate","Donate"],["Sell","Sell"],["Swap","Swap"],["Buy request","Wanted"]].map(([v,l])=>(
@@ -904,8 +897,8 @@ function CommunityScreen({onGo}){
       {/* Header */}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:12,marginBottom:22}}>
         <div>
-          <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:26,color:"#0f172a",margin:"0 0 5px",letterSpacing:"-.3px"}}>Community Request Board</h2>
-          <p style={{fontSize:13,color:"#64748b",margin:0,lineHeight:1.6}}>People and organizations sharing what they urgently need.<br/>If you have something that matches, reach out — it costs nothing to help.</p>
+          <h2 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:26,color:"#0f172a",margin:"0 0 5px",letterSpacing:"-.3px"}}>Community Request Board</h2>
+          <p style={{fontSize:13,color:"#64748b",margin:0,lineHeight:1.6}}>People and organizations sharing what they urgently need.<br/>If you have something that matches, reach out. It costs nothing to help.</p>
         </div>
         <Btn v="primary" sz="lg" onClick={()=>onGo("list",{listingType:"need"})}>+ Post a Request</Btn>
       </div>
@@ -913,7 +906,7 @@ function CommunityScreen({onGo}){
       {/* Mission strip */}
       <div style={{background:`linear-gradient(135deg,${AMBER2},#fef9f0)`,border:`1px solid #fde68a`,borderRadius:10,padding:"12px 18px",marginBottom:20,display:"flex",alignItems:"center",gap:10}}>
         <span style={{fontSize:20}}>🤲</span>
-        <p style={{fontSize:12,color:"#78350f",margin:0,lineHeight:1.7}}><strong>How it works:</strong> Post what you need and the community responds. Whether it's food supplies, medical equipment, school materials, or anything else — someone nearby may have exactly what you're looking for.</p>
+        <p style={{fontSize:12,color:"#78350f",margin:0,lineHeight:1.7}}><strong>How it works:</strong> Post what you need and the community responds. Whether it's food, medical equipment, school materials, or something else entirely, someone nearby may have exactly what you're looking for.</p>
       </div>
 
       {/* Filters row */}
@@ -1080,7 +1073,7 @@ function DeliveryScreen({loc}){
 
   return<div style={{padding:"16px 20px"}}>
     <SecHead>Delivery Options</SecHead>
-    <Alert><strong>Shipping from: {locData.label}</strong> — recommendations tailored to your region. For overseas deliveries, open the International tab and select your destination country.</Alert>
+    <Alert><strong>Shipping from: {locData.label}</strong>. These recommendations are tailored to your region. For overseas deliveries, open the International tab and select your destination country.</Alert>
     <div style={{display:"flex",gap:8,marginBottom:20,flexWrap:"wrap"}}>
       {[["local","Local / Domestic"],["intl","International"],["cold","Cold Chain"],["bulk","Bulk / Freight"]].map(([id,label])=>(
         <button key={id} onClick={()=>setTab(id)} style={{padding:"7px 17px",borderRadius:99,border:tab===id?"none":"1px solid #e0ede7",background:tab===id?G:"#fff",color:tab===id?"#fff":"#64748b",fontSize:13,fontWeight:tab===id?700:400,cursor:"pointer"}}>{label}</button>
@@ -1191,7 +1184,7 @@ function ListScreen({onGo,defaultType}){
       {(form.pickup_available||form.domestic_shipping||form.international||form.cold_chain||form.bulk_freight)&&<>
         <div style={{fontSize:10,fontWeight:700,color:"#78350f",textTransform:"uppercase",letterSpacing:.8,marginBottom:10}}>Suggested carriers for your selected options</div>
         <div style={{display:"flex",flexDirection:"column",gap:7}}>
-          {form.pickup_available&&<DeliveryTip icon="📍" title="Local pickup" body="Zero cost and zero emissions — the best option when possible. Use UpGive Messages to agree on a date, time, and address directly with the claimant."/>}
+          {form.pickup_available&&<DeliveryTip icon="📍" title="Local pickup" body="Free and the best option when it's possible. Use UpGive Messages to agree on a date, time, and address directly with the claimant."/>}
           {form.domestic_shipping&&<DeliveryTip icon="🚚" title="Domestic shipping" body="UPS Ground $12–38 (up to 150 lbs, 3–5 days) · FedEx Express $28–80 (1–2 days) · USPS Priority Mail $8–26 (1–3 days, free pickup). Compare at each carrier's website."/>}
           {form.international&&<DeliveryTip icon="🌍" title="International" body="DHL Express is recommended for most destinations (3–5 days, $38–120, includes customs clearance). Open the Delivery screen and select your destination country for route-specific options and customs guidance."/>}
           {form.cold_chain&&<DeliveryTip icon="❄️" title="Cold chain / perishables" body="Lineage Logistics: refrigerated 35–38 °F, $0.18/lb/day, FDA-compliant with temperature monitoring. Americold for deep-frozen goods (–10 °F). Confirm temperature requirements with the recipient before booking."/>}
@@ -1218,7 +1211,7 @@ function ListScreen({onGo,defaultType}){
   </div>;
 }
 
-// ─── DASHBOARD SETTINGS (stable module-level component — avoid inner remounts) ─
+// --- DASHBOARD SETTINGS (stable module-level component, avoid inner remounts) ---
 function DashSettings({user,profile,signOut,refreshProfile}){
   const[pf,setPf]=useState({display_name:profile?.display_name||"",org_name:profile?.org_name||"",bio:profile?.bio||"",website:profile?.website||"",city:profile?.city||"",country:profile?.country||"",primary_industry:profile?.primary_industry||""});
   const[saving,setSaving]=useState(false);
@@ -1276,7 +1269,7 @@ function ListingRow({listing,onRemoved}){
       .select("id");
     setBusy(false);
     if(error){setErr(error.message);setConfirming(false);return;}
-    if(!data?.length){setErr("Could not remove — the listing may already be gone, or your account lacks permission.");setConfirming(false);return;}
+    if(!data?.length){setErr("Couldn't remove it. The listing may already be gone, or your account may not have permission.");setConfirming(false);return;}
     onRemoved(listing.id);
   };
 
@@ -1316,7 +1309,7 @@ function RemoveListingBtn({listingId,onSuccess}){
     const{data,error}=await supabase.from("listings").update({status:"removed"}).eq("id",listingId).select("id");
     setBusy(false);
     if(error){setErr(error.message);return;}
-    if(!data?.length){setErr("Could not remove — check permissions or try again.");return;}
+    if(!data?.length){setErr("Couldn't remove it. Check your permissions or try again.");return;}
     onSuccess();
   };
 
@@ -1355,7 +1348,7 @@ function DashboardScreen({role,onGo}){
 
   const Overview=()=><div style={{padding:16}}>
     <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16}}>
-      {[["Items listed",profile?.total_listed||listings.length],["Claims received",profile?.total_claimed||claims.length],["Rating",profile?.rating>0?Number(profile.rating).toFixed(1):"—"],["Followers",profile?.follower_count||0]].map(([label,val])=>(
+      {[["Items listed",profile?.total_listed||listings.length],["Claims received",profile?.total_claimed||claims.length],["Rating",profile?.rating>0?Number(profile.rating).toFixed(1):"N/A"],["Followers",profile?.follower_count||0]].map(([label,val])=>(
         <div key={label} style={{background:"#f0fbf5",border:"1px solid #c5edd9",borderRadius:10,padding:"14px 16px"}}><div style={{fontSize:11,color:"#64748b",marginBottom:4,textTransform:"uppercase",letterSpacing:.5}}>{label}</div><div style={{fontSize:22,fontWeight:700,color:"#0f172a"}}>{val}</div></div>
       ))}
     </div>
@@ -1403,7 +1396,7 @@ function DashboardScreen({role,onGo}){
           {c.status==="approved"&&<Btn v="primary" sz="sm" onClick={()=>updateClaim(c.id,"shipped")}>Mark as Shipped</Btn>}
         </div>
 
-        {/* Delivery responsibility panel — shown once claim is approved */}
+        {/* Delivery responsibility panel, shown once claim is approved */}
         {c.status==="approved"&&(
           <div style={{background:AMBER2,borderTop:`1.5px solid #fde68a`,padding:"14px 16px"}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
@@ -1525,7 +1518,7 @@ function StoreScreen({profileData,onMsg,onGo}){
     <div style={{background:G,padding:"22px 20px",display:"flex",alignItems:"center",gap:16,flexWrap:"wrap"}}>
       <Av url={profileData.avatar_url} init={profileData.display_name||profileData.org_name||"?"} size={58} style={{border:"3px solid rgba(255,255,255,.3)"}}/>
       <div style={{flex:1}}>
-        <h2 style={{fontFamily:"'DM Serif Display',serif",fontSize:22,color:"#fff",margin:"0 0 3px"}}>{profileData.org_name||profileData.display_name}</h2>
+        <h2 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:22,color:"#fff",margin:"0 0 3px"}}>{profileData.org_name||profileData.display_name}</h2>
         <p style={{fontSize:12,color:G4,margin:"0 0 8px"}}>{profileData.primary_industry} · {profileData.city}{profileData.country?`, ${profileData.country}`:""}</p>
         <div style={{display:"flex",gap:14,flexWrap:"wrap"}}>
           {[`${profileData.total_listed||listings.length} items listed`,profileData.rating>0?`${Number(profileData.rating).toFixed(1)} rating`:null,`${profileData.follower_count||0} followers`,profileData.verified?"Verified":null].filter(Boolean).map(l=><span key={l} style={{fontSize:11,color:G4}}>{l}</span>)}
@@ -1599,7 +1592,7 @@ function AppContent(){
   return(
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         body{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;background:#fff;color:#111827}
         input,textarea,select,button{font-family:inherit}
@@ -1656,7 +1649,7 @@ function AppContent(){
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2C8 2 3 5 3 9a5 5 0 0010 0C13 5 8 2 8 2z" fill="rgba(255,255,255,.9)"/><path d="M8 7v5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round"/></svg>
             </div>
             <div>
-              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:TEXT,letterSpacing:"-0.3px",lineHeight:1.1}}>UpGive</div>
+              <div style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:18,color:TEXT,letterSpacing:"-0.3px",lineHeight:1.1}}>UpGive</div>
               <div className="top-logo-tagline" style={{fontSize:9,color:MUTED,letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:500}}>Surplus for Good</div>
             </div>
           </div>
@@ -1726,7 +1719,7 @@ function AppContent(){
                 <div style={{height:240,background:"#f0fbf5",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:80,marginBottom:20,overflow:"hidden"}}>
                   {screenData.images?.[0]?<img src={screenData.images[0]} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{width:64,height:64,borderRadius:10,background:"#c5edd9"}}/>}
                 </div>
-                <h1 style={{fontFamily:"'DM Serif Display',serif",fontSize:26,color:"#0f172a",margin:"0 0 6px",letterSpacing:"-.3px"}}>{screenData.title}</h1>
+                <h1 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:26,color:"#0f172a",margin:"0 0 6px",letterSpacing:"-.3px"}}>{screenData.title}</h1>
                 <div style={{fontSize:13,color:"#64748b",marginBottom:14}}>{screenData.profiles?.org_name||screenData.profiles?.display_name} · {screenData.category} · {screenData.city}</div>
                 <div style={{fontSize:28,fontWeight:700,color:screenData.price?G2:AMBER,marginBottom:20}}>{screenData.price?`$${Number(screenData.price).toLocaleString()}`:"Free"}</div>
                 {screenData.description&&<p style={{fontSize:14,color:"#374151",lineHeight:1.85,marginBottom:22}}>{screenData.description}</p>}
