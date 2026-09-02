@@ -334,8 +334,8 @@ function LandingScreen({onGo}){
     {value:"$1.1T",unit:"In surplus inventory",label:"held by US companies at any given time",source:"National Retail Federation 2023"},
   ];
   const problems=[
-    {title:"Companies want to give, but don't have a good way to do it",body:"Most corporate sustainability teams have surplus goods sitting around with nowhere good to send them. Without an easy way to verify recipients and coordinate logistics, a lot of it ends up in a landfill instead of somewhere useful.",stat:"80%",statLabel:"of companies lack a structured surplus donation process"},
-    {title:"Nonprofits need goods, but sourcing them is a slog",body:"NGOs, schools, clinics, and community groups spend 35 to 60% of their budgets just procuring basic supplies, while companies nearby are paying to throw out the same items.",stat:"$240B",statLabel:"spent annually by nonprofits on goods procurement"},
+    {title:"Companies want to give back but don't always know how.",body:"Most corporate sustainability teams have surplus goods sitting around with nowhere good to send them. Without an easy way to verify recipients and coordinate logistics, a lot of it ends up in a landfill instead of somewhere useful.",stat:"80%",statLabel:"of companies lack a structured surplus donation process"},
+    {title:"Nonprofits need goods but struggle to find them.",body:"NGOs, schools, clinics, and community groups spend 35 to 60% of their budgets just procuring basic supplies, while companies nearby are paying to throw out the same items.",stat:"$240B",statLabel:"spent annually by nonprofits on goods procurement"},
     {title:"The planet pays the price",body:"Electronic waste contains mercury, lead, and cadmium, and about 75% of it is disposed of improperly. Every laptop that ends up in a landfill instead of being reused adds roughly 300 kg of CO2 equivalent that didn't need to happen.",stat:"75%",statLabel:"of global e-waste is improperly disposed of"},
   ];
   const steps=[
@@ -359,24 +359,21 @@ function LandingScreen({onGo}){
     <div style={{fontFamily:"'Inter',system-ui,sans-serif",color:TEXT}}>
 
       {/* ── HERO ── */}
-      <div style={{background:"linear-gradient(160deg,#052e16 0%,#14532d 50%,#166534 100%)",padding:"110px 24px 100px",textAlign:"center",position:"relative",overflow:"hidden"}}>
-        {/* Real background image with overlay */}
-        <div style={{position:"absolute",inset:0,backgroundImage:"url(https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?w=1600&q=60)",backgroundSize:"cover",backgroundPosition:"center",opacity:.12,pointerEvents:"none"}}/>
-        <div style={{position:"absolute",inset:0,backgroundImage:"radial-gradient(rgba(255,255,255,.03) 1px,transparent 1px)",backgroundSize:"32px 32px",pointerEvents:"none"}}/>
-        <div style={{position:"relative",maxWidth:820,margin:"0 auto"}}>
-          <div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"6px 20px",borderRadius:4,background:"rgba(26,158,110,.2)",border:"1px solid rgba(26,158,110,.4)",marginBottom:26}}>
-            <span style={{width:6,height:6,borderRadius:"50%",background:"#4ade80",flexShrink:0,boxShadow:"0 0 6px rgba(74,222,128,.8)"}}/>
-            <span style={{fontSize:11,fontWeight:700,color:"#86efac",letterSpacing:2,textTransform:"uppercase"}}>Corporate Surplus Marketplace</span>
+      <div style={{background:"#fff",padding:"96px 24px 84px",textAlign:"center",borderBottom:"1px solid #e2e8f0"}}>
+        <div style={{maxWidth:760,margin:"0 auto"}}>
+          <div style={{display:"inline-flex",alignItems:"center",gap:8,padding:"6px 18px",borderRadius:4,background:G3,border:`1px solid ${G4}`,marginBottom:26}}>
+            <span style={{width:6,height:6,borderRadius:"50%",background:G,flexShrink:0}}/>
+            <span style={{fontSize:11,fontWeight:700,color:G2,letterSpacing:2,textTransform:"uppercase"}}>Corporate Surplus Marketplace</span>
           </div>
-          <h1 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:54,color:"#fff",margin:"0 0 22px",lineHeight:1.07,letterSpacing:"-1.5px"}}>
-            Every company has surplus.<br/><em style={{color:"#4ade80",fontStyle:"italic"}}>Most of it goes to waste.</em>
+          <h1 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:48,color:"#0f172a",margin:"0 0 22px",lineHeight:1.12,letterSpacing:"-1.2px"}}>
+            We find new uses for what companies don't need.
           </h1>
-          <p style={{color:"rgba(255,255,255,.72)",fontSize:16,margin:"0 auto 40px",maxWidth:580,lineHeight:1.9}}>
-            UpGive connects companies and organizations with verified nonprofits, schools, and communities, turning unused inventory into real impact, at no cost.
+          <p style={{color:"#475569",fontSize:16,margin:"0 auto 40px",maxWidth:560,lineHeight:1.9}}>
+            UpGive connects companies and organizations with verified nonprofits, schools, and communities, turning unused inventory into real impact for free!
           </p>
           <div style={{display:"flex",gap:14,justifyContent:"center",flexWrap:"wrap"}}>
-            <HeroBtn onClick={()=>onGo("auth")}>Get Started, It's Free</HeroBtn>
-            <HeroBtn onClick={()=>onGo("market")} outline>Browse Available Goods</HeroBtn>
+            <Btn v="primary" sz="lg" onClick={()=>onGo("auth")}>Get Started, It's Free</Btn>
+            <Btn v="outline" sz="lg" onClick={()=>onGo("market")}>Browse Available Goods</Btn>
           </div>
         </div>
       </div>
@@ -400,7 +397,7 @@ function LandingScreen({onGo}){
         <div style={{maxWidth:1040,margin:"0 auto"}}>
           <div style={{textAlign:"center",marginBottom:52}}>
             <div style={{fontSize:11,fontWeight:700,color:G,textTransform:"uppercase",letterSpacing:2,marginBottom:12}}>The Problem</div>
-            <h2 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:40,color:"#0f172a",margin:"0 0 16px",letterSpacing:"-.8px",lineHeight:1.15}}>Billions in usable goods, nowhere to go</h2>
+            <h2 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:40,color:"#0f172a",margin:"0 0 16px",letterSpacing:"-.8px",lineHeight:1.15}}>Billions of usable goods from companies go to waste.</h2>
             <p style={{fontSize:15,color:"#64748b",maxWidth:540,margin:"0 auto",lineHeight:1.85}}>Companies throw out billions of dollars in usable goods every year, mostly because there's never been a simple way to get those goods to the people who need them. That's what we're trying to fix.</p>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:24}}>
@@ -422,7 +419,7 @@ function LandingScreen({onGo}){
         <div style={{maxWidth:1040,margin:"0 auto"}}>
           <div style={{textAlign:"center",marginBottom:52}}>
             <div style={{fontSize:11,fontWeight:700,color:G,textTransform:"uppercase",letterSpacing:2,marginBottom:12}}>The Scale</div>
-            <h2 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:40,color:"#0f172a",margin:"0 0 16px",letterSpacing:"-.8px",lineHeight:1.15}}>What gets wasted, by category</h2>
+            <h2 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:40,color:"#0f172a",margin:"0 0 16px",letterSpacing:"-.8px",lineHeight:1.15}}>What gets wasted across different categories.</h2>
             <p style={{fontSize:15,color:"#64748b",maxWidth:500,margin:"0 auto",lineHeight:1.85}}>These are the categories UpGive is built to redirect, from corporate warehouses to the people who need them.</p>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16}}>
@@ -455,7 +452,7 @@ function LandingScreen({onGo}){
         <div style={{maxWidth:900,margin:"0 auto"}}>
           <div style={{textAlign:"center",marginBottom:52}}>
             <div style={{fontSize:11,fontWeight:700,color:G,textTransform:"uppercase",letterSpacing:2,marginBottom:12}}>How It Works</div>
-            <h2 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:40,color:"#0f172a",margin:"0 0 14px",letterSpacing:"-.8px"}}>Simple. Verified. Impactful.</h2>
+            <h2 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:40,color:"#0f172a",margin:"0 0 14px",letterSpacing:"-.8px"}}>UpGive is simple, verified, and has a great impact.</h2>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:40}}>
             {steps.map(s=>(
@@ -477,13 +474,13 @@ function LandingScreen({onGo}){
             <h2 style={{fontFamily:"'Atkinson Hyperlegible',system-ui,sans-serif",fontSize:40,color:"#0f172a",margin:"0 0 16px",letterSpacing:"-.8px"}}>Built with world-class partners</h2>
             <p style={{fontSize:15,color:"#64748b",maxWidth:520,margin:"0 auto",lineHeight:1.85}}>We work alongside leading nonprofits, technology companies, and international organizations to ensure surplus goods reach the right hands, verified.</p>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:20}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",columnGap:60,rowGap:36,maxWidth:900,margin:"0 auto"}}>
             {partners.map(p=>(
-              <div key={p.category} style={{padding:"26px 30px",border:"1px solid #e2e8f0",borderRadius:12,background:"#f8fafc"}}>
-                <div style={{fontSize:10,fontWeight:700,color:G,textTransform:"uppercase",letterSpacing:1.5,marginBottom:16}}>{p.category}</div>
-                <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-                  {p.orgs.map(o=>(
-                    <span key={o} style={{padding:"5px 13px",borderRadius:4,background:"#fff",border:"1px solid #e2e8f0",fontSize:12,color:"#475569",fontWeight:500}}>{o}</span>
+              <div key={p.category}>
+                <div style={{fontSize:11,fontWeight:700,color:"#0f172a",letterSpacing:.3,marginBottom:14,paddingBottom:10,borderBottom:"1px solid #e2e8f0"}}>{p.category}</div>
+                <div>
+                  {p.orgs.map((o,i)=>(
+                    <div key={o} style={{fontSize:13,color:"#475569",padding:"7px 0",borderBottom:i<p.orgs.length-1?"1px solid #f1f5f9":"none"}}>{o}</div>
                   ))}
                 </div>
               </div>
