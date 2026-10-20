@@ -33,6 +33,19 @@ async function safeAuth(fn){
   catch(err){ return { data:null, error:{ message: err?.message || "Network error. Please try again." } }; }
 }
 
+// Conversations store participants as a uuid[] (participant_ids). PostgREST can't
+// embed profiles through an array column, so we resolve the participants with a
+// separate query and attach them as `participant_profiles` — matching what the
+// conversation list expects.
+async function attachParticipants(convos){
+  if(!supabase||!convos?.length) return convos||[];
+  const ids=[...new Set(convos.flatMap(c=>c.participant_ids||[]))];
+  if(!ids.length) return convos;
+  const{data}=await supabase.from("profiles").select("id,display_name,org_name,avatar_url").in("id",ids);
+  const byId=Object.fromEntries((data||[]).map(p=>[p.id,p]));
+  return convos.map(c=>({...c,participant_profiles:(c.participant_ids||[]).map(id=>byId[id]).filter(Boolean)}));
+}
+
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const G="#16a34a",G2="#15803d",G3="#f0fdf4",G4="#bbf7d0";
 const AMBER="#d97706",AMBER2="#fffbeb",AMBER3="#fef3c7";
@@ -991,7 +1004,7 @@ function MessagesScreen({onGoDelivery}){
 
   useEffect(()=>{
     if(!user)return;
-    const loadConvos=()=>supabase.from("conversations").select("*,participant_profiles:profiles(id,display_name,org_name,avatar_url)").contains("participant_ids",[user.id]).order("updated_at",{ascending:false}).then(({data})=>{setConvos(data||[]);setLoading(false);});
+    const loadConvos=()=>supabase.from("conversations").select("*").contains("participant_ids",[user.id]).order("updated_at",{ascending:false}).then(async({data})=>{setConvos(await attachParticipants(data||[]));setLoading(false);});
     loadConvos();
     const sub=supabase.channel("convos-list").on("postgres_changes",{event:"UPDATE",schema:"public",table:"conversations"},loadConvos).subscribe();
     return()=>supabase.removeChannel(sub);
@@ -1370,8 +1383,8 @@ function DashboardScreen({role,onGo}){
     Promise.all([
       supabase.from("listings").select("*").eq("user_id",user.id).neq("status","removed").order("created_at",{ascending:false}).limit(20),
       supabase.from("claims").select("*,listing:listings(title),claimant:profiles!claims_claimant_id_fkey(display_name,org_name,avatar_url)").eq("vendor_id",user.id).order("created_at",{ascending:false}).limit(20),
-      supabase.from("conversations").select("*,participant_profiles:profiles(id,display_name,org_name,avatar_url)").contains("participant_ids",[user.id]).order("updated_at",{ascending:false}).limit(5),
-    ]).then(([l,cl,cv])=>{setListings(l.data||[]);setClaims(cl.data||[]);setConvos(cv.data||[]);setLoading(false);});
+      supabase.from("conversations").select("*").contains("participant_ids",[user.id]).order("updated_at",{ascending:false}).limit(5),
+    ]).then(async([l,cl,cv])=>{setListings(l.data||[]);setClaims(cl.data||[]);setConvos(await attachParticipants(cv.data||[]));setLoading(false);});
   },[user]);
 
   const updateClaim=async(id,status)=>{await supabase.from("claims").update({status}).eq("id",id);setClaims(p=>p.map(c=>c.id===id?{...c,status}:c));};
