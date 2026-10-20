@@ -1,10 +1,37 @@
 import { useState, useEffect, useRef, useCallback, createContext, useContext } from "react";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// ─── CONFIG ── Replace with your Supabase project values ──────────────────────
+// ─── CONFIG ── Supabase project values come from environment variables ────────
+// Local dev: put these in a .env file at the project root (see .env.example).
+// Production (Vercel): set them in Project → Settings → Environment Variables,
+// then redeploy. Without them the app shows a clear config screen instead of a
+// blank page, so a missing key is never a silent white-screen crash.
 const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_CONFIGURED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+
+function createSupabaseClient(){
+  if(!SUPABASE_CONFIGURED){
+    console.error("[UpGive] Supabase env vars missing. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
+    return null;
+  }
+  try{
+    return createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }catch(err){
+    console.error("[UpGive] Supabase failed to initialise:", err?.message || err);
+    return null;
+  }
+}
+const supabase = createSupabaseClient();
+
+// A friendly wrapper so auth calls never crash the app when the backend is
+// unreachable or unconfigured — they resolve with a readable error instead.
+const NO_BACKEND = { data:null, error:{ message:"Backend is not reachable right now. Please try again shortly." } };
+async function safeAuth(fn){
+  if(!supabase) return NO_BACKEND;
+  try{ return await fn(); }
+  catch(err){ return { data:null, error:{ message: err?.message || "Network error. Please try again." } }; }
+}
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const G="#16a34a",G2="#15803d",G3="#f0fdf4",G4="#bbf7d0";
@@ -47,30 +74,36 @@ function AuthProvider({children}){
   const [loading,setLoading]=useState(true);
 
   const loadProfile=useCallback(async(uid)=>{
-    const{data}=await supabase.from("profiles").select("*").eq("id",uid).single();
-    setProfile(data);
+    if(!supabase)return;
+    try{
+      const{data}=await supabase.from("profiles").select("*").eq("id",uid).single();
+      setProfile(data);
+    }catch(err){
+      console.error("[UpGive] loadProfile failed:",err?.message||err);
+    }
   },[]);
 
   useEffect(()=>{
+    if(!supabase){ setLoading(false); return; }   // no backend → don't crash, just stop loading
     supabase.auth.getSession().then(({data:{session}})=>{
       setUser(session?.user??null);
       if(session?.user)loadProfile(session.user.id);
       setLoading(false);
-    });
+    }).catch(()=>setLoading(false));
     const{data:{subscription}}=supabase.auth.onAuthStateChange((_,session)=>{
       setUser(session?.user??null);
       if(session?.user)loadProfile(session.user.id);
       else setProfile(null);
     });
-    return()=>subscription.unsubscribe();
+    return()=>subscription?.unsubscribe();
   },[loadProfile]);
 
-  const signUp=async(email,password,meta)=>supabase.auth.signUp({email,password,options:{data:meta}});
-  const signIn=async(email,password)=>supabase.auth.signInWithPassword({email,password});
-  const signOut=()=>supabase.auth.signOut();
+  const signUp=async(email,password,meta)=>safeAuth(()=>supabase.auth.signUp({email,password,options:{data:meta}}));
+  const signIn=async(email,password)=>safeAuth(()=>supabase.auth.signInWithPassword({email,password}));
+  const signOut=()=>safeAuth(()=>supabase.auth.signOut());
   const refreshProfile=()=>user&&loadProfile(user.id);
 
-  return<AuthCtx.Provider value={{user,profile,loading,signUp,signIn,signOut,refreshProfile}}>{children}</AuthCtx.Provider>;
+  return<AuthCtx.Provider value={{user,profile,loading,configured:SUPABASE_CONFIGURED,signUp,signIn,signOut,refreshProfile}}>{children}</AuthCtx.Provider>;
 }
 
 // ─── BASE COMPONENTS ──────────────────────────────────────────────────────────
@@ -209,7 +242,10 @@ function ListingCard({listing,onView,onClaim,onMsg}){
 
 // ─── GOOGLE SIGN-IN BUTTON ────────────────────────────────────────────────────
 function GoogleBtn({label="Continue with Google"}){
-  const go=()=>supabase.auth.signInWithOAuth({provider:"google",options:{redirectTo:window.location.origin}});
+  const go=()=>{
+    if(!supabase){ alert("Backend isn't configured yet. Please set the Supabase keys and redeploy."); return; }
+    supabase.auth.signInWithOAuth({provider:"google",options:{redirectTo:window.location.origin}});
+  };
   return(
     <button onClick={go} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,width:"100%",padding:"9px 16px",borderRadius:8,border:"1px solid #e0ede7",background:"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:500,color:"#374151",marginTop:8,transition:"border-color .12s"}} onMouseEnter={e=>e.currentTarget.style.borderColor="#bbb"} onMouseLeave={e=>e.currentTarget.style.borderColor="#e0ede7"}>
       <svg width="18" height="18" viewBox="0 0 18 18">
@@ -1559,6 +1595,7 @@ function AppContent(){
 
   useEffect(()=>{
     if(!user){setUnread(0);return;}
+    if(!supabase)return;
     const sub=supabase.channel("unread-msgs").on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},()=>setUnread(n=>n+1)).subscribe();
     return()=>supabase.removeChannel(sub);
   },[user]);
@@ -1747,6 +1784,35 @@ function AppContent(){
   );
 }
 
+// Shown when Supabase env vars are missing — a clear, branded message instead
+// of a blank white screen, so the problem is obvious and quick to fix.
+function ConfigError(){
+  return(
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,-apple-system,sans-serif",background:G3}}>
+      <div style={{maxWidth:440,background:"#fff",border:`1px solid ${BORDER}`,borderRadius:16,padding:"32px 28px",textAlign:"center",boxShadow:"0 4px 20px rgba(0,0,0,.06)"}}>
+        <div style={{fontSize:40,marginBottom:12}}>⚙️</div>
+        <h1 style={{fontSize:20,fontWeight:700,color:TEXT,margin:"0 0 8px"}}>UpGive isn't configured yet</h1>
+        <p style={{fontSize:14,color:MUTED,lineHeight:1.6,margin:"0 0 18px"}}>
+          The app can't reach its backend because the Supabase keys are missing. This is a one-time setup, not a bug in the app.
+        </p>
+        <div style={{textAlign:"left",background:G3,border:`1px solid ${G4}`,borderRadius:10,padding:"14px 16px",fontSize:13,color:"#14532d",lineHeight:1.7}}>
+          <strong>To fix:</strong> set these two environment variables, then redeploy:
+          <div style={{fontFamily:"ui-monospace,monospace",fontSize:12,marginTop:8,color:G2}}>
+            VITE_SUPABASE_URL<br/>VITE_SUPABASE_ANON_KEY
+          </div>
+          <div style={{marginTop:8,color:MUTED}}>Local dev → a <code>.env</code> file · Production → Vercel → Settings → Environment Variables.</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Gate(){
+  const{configured}=useAuth();
+  if(!configured)return<ConfigError/>;
+  return<AppContent/>;
+}
+
 export default function UpGive(){
-  return<AuthProvider><AppContent/></AuthProvider>;
+  return<AuthProvider><Gate/></AuthProvider>;
 }
