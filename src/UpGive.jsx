@@ -1594,6 +1594,107 @@ function StoreScreen({profileData,onMsg,onGo}){
 }
 
 // ─── ROOT APP ─────────────────────────────────────────────────────────────────
+// ─── AI ASSISTANT ─────────────────────────────────────────────────────────────
+// A nonprofit describes its need in plain words; we load the live catalog, ask the
+// secure /api/assist endpoint to match it, and show matched goods + a drafted
+// outreach message + a delivery tip — compressing browse → message → deliver.
+function AIAssistScreen({onView,onClaim,onMsg}){
+  const[need,setNeed]=useState("");
+  const[loading,setLoading]=useState(false);
+  const[error,setError]=useState("");
+  const[result,setResult]=useState(null);
+  const[catalog,setCatalog]=useState([]);
+  const[copied,setCopied]=useState(false);
+
+  const examples=[
+    "We run an after-school program in Atlanta and need ~20 laptops and some children's books.",
+    "A food bank seeking non-perishable food and a refrigerator for storage.",
+    "Setting up a community clinic — need basic medical supplies and office furniture.",
+  ];
+
+  const run=async()=>{
+    const q=need.trim();
+    if(!q)return;
+    setLoading(true);setError("");setResult(null);
+    try{
+      let listings=[];
+      if(supabase){
+        const{data}=await supabase
+          .from("listings")
+          .select("id,title,category,city,country,quantity,price,description,user_id,images,status,listing_type,profiles(display_name,org_name,avatar_url,verified)")
+          .eq("status","active").neq("listing_type","need")
+          .order("created_at",{ascending:false}).limit(40);
+        listings=data||[];
+      }
+      setCatalog(listings);
+      const res=await fetch("/api/assist",{
+        method:"POST",
+        headers:{"content-type":"application/json"},
+        body:JSON.stringify({need:q,catalog:listings.map(l=>({id:l.id,title:l.title,category:l.category,city:l.city,country:l.country,quantity:l.quantity,price:l.price,description:l.description}))}),
+      });
+      let json={};
+      try{ json=await res.json(); }catch{ json={error:"Unexpected response from the assistant."}; }
+      if(!res.ok){ setError(json.error||"The assistant is unavailable right now."); setLoading(false); return; }
+      setResult(json);
+    }catch(err){
+      setError("Couldn't reach the assistant. Please check your connection and try again.");
+    }
+    setLoading(false);
+  };
+
+  const byId=id=>catalog.find(l=>String(l.id)===String(id));
+  const matched=(result?.matches||[]).map(m=>({...m,listing:byId(m.id)})).filter(m=>m.listing);
+
+  return<div style={{maxWidth:820,margin:"0 auto",padding:"8px 0 40px"}}>
+    <div style={{textAlign:"center",marginBottom:20}}>
+      <div style={{fontSize:12,fontWeight:700,color:G2,letterSpacing:".08em",textTransform:"uppercase"}}>✨ AI Assistant</div>
+      <h2 style={{fontSize:26,fontWeight:700,color:TEXT,margin:"6px 0",fontFamily:"'DM Serif Display',serif"}}>Tell us what your organization needs</h2>
+      <p style={{fontSize:14,color:MUTED,lineHeight:1.6,maxWidth:540,margin:"0 auto"}}>Describe it in plain words — we'll find matching surplus goods, draft a message to the donor, and suggest how to get it delivered.</p>
+    </div>
+
+    <div style={{...card,padding:18,marginBottom:14}}>
+      <textarea value={need} onChange={e=>setNeed(e.target.value)} rows={3}
+        placeholder="e.g. We run an after-school program in Atlanta and need about 20 laptops and some children's books."
+        style={{...inp,resize:"vertical",lineHeight:1.6,fontSize:14}}
+        onKeyDown={e=>{if((e.metaKey||e.ctrlKey)&&e.key==="Enter")run();}}/>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:12,gap:12,flexWrap:"wrap"}}>
+        <span style={{fontSize:11,color:MUTED}}>Tip: ⌘/Ctrl + Enter to run</span>
+        <Btn v="primary" sz="lg" onClick={run} disabled={loading||!need.trim()}>{loading?"Finding matches…":"✨ Find matches"}</Btn>
+      </div>
+    </div>
+
+    {!result&&!loading&&<div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:20}}>
+      {examples.map((ex,i)=><button key={i} onClick={()=>setNeed(ex)} style={{textAlign:"left",fontSize:12,color:MUTED,background:"#fff",border:`1px solid ${BORDER}`,borderRadius:999,padding:"7px 14px",cursor:"pointer",transition:"border-color .15s"}} onMouseEnter={e=>e.currentTarget.style.borderColor=G} onMouseLeave={e=>e.currentTarget.style.borderColor=BORDER}>{ex.length>60?ex.slice(0,58)+"…":ex}</button>)}
+    </div>}
+
+    {error&&<Alert type="red" icon="⚠️">{error}</Alert>}
+    {loading&&<Spinner/>}
+
+    {result&&!loading&&<div>
+      {result.summary&&<Alert type="green" icon="✨">{result.summary}</Alert>}
+
+      {matched.length>0?<>
+        <SecHead>Matched goods · {matched.length}</SecHead>
+        <div style={{display:"grid",gap:16,marginBottom:24}}>
+          {matched.map(({listing,reason})=>(
+            <div key={listing.id}>
+              <ListingCard listing={listing} onView={onView} onClaim={onClaim} onMsg={onMsg}/>
+              {reason&&<div style={{fontSize:12.5,color:G2,background:G3,border:`1px solid ${G4}`,borderRadius:8,padding:"8px 12px",marginTop:6}}>✨ {reason}</div>}
+            </div>
+          ))}
+        </div>
+      </>:<Empty icon="🔍" title="No close matches yet" sub="Nothing in the current catalog fits this need. Try rephrasing, or check back as new goods are listed."/>}
+
+      {result.draftMessage&&<div style={{...card,padding:18,marginBottom:16}}>
+        <SecHead action={<Btn sz="sm" onClick={()=>{try{navigator.clipboard?.writeText(result.draftMessage);setCopied(true);setTimeout(()=>setCopied(false),1500);}catch{}}}>{copied?"Copied ✓":"Copy"}</Btn>}>Draft outreach message</SecHead>
+        <div style={{fontSize:14,color:TEXT,lineHeight:1.7,whiteSpace:"pre-wrap"}}>{result.draftMessage}</div>
+      </div>}
+
+      {result.deliveryTip&&<Alert type="blue" icon="🚚"><strong>Delivery tip: </strong>{result.deliveryTip}</Alert>}
+    </div>}
+  </div>;
+}
+
 function AppContent(){
   const{user,profile,loading}=useAuth();
   const[screen,setScreen]=useState("home");
@@ -1628,7 +1729,7 @@ function AppContent(){
   },[user,go]);
 
   const locData=LOCS[loc]||LOCS.atlanta;
-  const navItems=[{id:"home",label:"Home"},{id:"market",label:"Browse"},{id:"community",label:"Community"},{id:"local",label:"Nearby"},{id:"msgs",label:"Messages",badge:unread},{id:"delivery",label:"Delivery"},{id:"dash",label:"Dashboard"}];
+  const navItems=[{id:"home",label:"Home"},{id:"market",label:"Browse"},{id:"assist",label:"✨ Match"},{id:"community",label:"Community"},{id:"local",label:"Nearby"},{id:"msgs",label:"Messages",badge:unread},{id:"delivery",label:"Delivery"},{id:"dash",label:"Dashboard"}];
 
   // ── After OAuth redirect, navigate to dashboard once user is set ──
   const[oauthLanding]=useState(()=>typeof window!=="undefined"&&(window.location.hash.includes("access_token")||window.location.search.includes("code=")));
@@ -1751,6 +1852,7 @@ function AppContent(){
         <div className="pg" key={screen}>
           {screen==="home"     &&(user?<HomeScreen loc={loc} onGo={go} onClaim={handleClaim} onMsg={handleMsg}/>:<LandingScreen onGo={go}/>)}
           {screen==="market"   &&<MarketScreen onClaim={handleClaim} onView={l=>go("listing",l)} onMsg={handleMsg}/>}
+          {screen==="assist"   &&<AIAssistScreen onClaim={handleClaim} onView={l=>go("listing",l)} onMsg={handleMsg}/>}
           {screen==="local"     &&<LocalScreen loc={loc} onGoStore={org=>go("store",org)}/>}
           {screen==="community" &&<CommunityScreen onGo={go}/>}
           {screen==="msgs"      &&<MessagesScreen onGoDelivery={()=>go("delivery")}/>}
