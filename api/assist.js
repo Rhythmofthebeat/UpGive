@@ -13,7 +13,7 @@
 //   Optional: GEMINI_MODEL to override the model (default below). Pick a current
 //   model name from AI Studio if the default ever changes.
 
-const DEFAULT_MODEL = "gemini-1.5-flash";
+const DEFAULT_MODEL = "gemini-2.5-flash";
 const apiUrl = (model, key) =>
   `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
