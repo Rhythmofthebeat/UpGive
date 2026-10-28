@@ -1,6 +1,21 @@
+// UpGive AI Assistant — Vercel serverless function (Google Gemini, free tier).
+//
+// WHY A SERVER FUNCTION: the AI key must never live in the browser. This runs on
+// Vercel's servers, reads the key from an environment variable, and the frontend
+// only ever talks to this endpoint — so the key is never exposed.
+//
+// SETUP (free, no credit card):
+//   1. Get a free API key at https://aistudio.google.com/apikey
+//   2. Vercel → Project → Settings → Environment Variables → add:
+//        GEMINI_API_KEY = <your key>
+//      (set it for the "Preview" environment / ai-demo branch for the demo)
+//   3. Redeploy.
+//   Optional: GEMINI_MODEL to override the model (default below). Pick a current
+//   model name from AI Studio if the default ever changes.
 
-const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
-const DEFAULT_MODEL = "gpt-4o-mini";
+const DEFAULT_MODEL = "gemini-1.5-flash";
+const apiUrl = (model, key) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
 const SYSTEM_PROMPT =
   "You are UpGive's matching assistant. UpGive is a marketplace where companies " +
@@ -20,9 +35,9 @@ export default async function handler(req, res) {
     return;
   }
 
-  const key = process.env.OPENAI_API_KEY;
+  const key = process.env.GEMINI_API_KEY;
   if (!key) {
-    res.status(500).json({ error: "The AI assistant isn't configured yet (missing OPENAI_API_KEY)." });
+    res.status(500).json({ error: "The AI assistant isn't configured yet (missing GEMINI_API_KEY)." });
     return;
   }
 
@@ -53,32 +68,30 @@ export default async function handler(req, res) {
       "Nonprofit need:\n" + need.slice(0, 2000) +
       "\n\nAvailable listings (JSON):\n" + JSON.stringify(items);
 
-    const aiRes = await fetch(OPENAI_URL, {
+    const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
+
+    const aiRes = await fetch(apiUrl(model, key), {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: "Bearer " + key,
-      },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        model: process.env.ASSIST_MODEL || DEFAULT_MODEL,
-        temperature: 0.4,
-        max_tokens: 1024,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userMessage },
-        ],
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents: [{ role: "user", parts: [{ text: userMessage }] }],
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens: 1024,
+          responseMimeType: "application/json",
+        },
       }),
     });
 
     if (!aiRes.ok) {
       const detail = await aiRes.text().catch(() => "");
-      res.status(502).json({ error: "The AI service returned an error.", detail: detail.slice(0, 300) });
+      res.status(502).json({ error: "The AI service returned an error.", detail: detail.slice(0, 400) });
       return;
     }
 
     const data = await aiRes.json();
-    const text = data?.choices?.[0]?.message?.content || "";
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
     let parsed;
     try {
