@@ -83,21 +83,33 @@ export default async function handler(req, res) {
         temperature: 0.4,
         maxOutputTokens: 2048,
         responseMimeType: "application/json",
+        // Disable "thinking" so newer Gemini models respond fast instead of
+        // spending many seconds reasoning internally (which caused long hangs).
+        thinkingConfig: { thinkingBudget: 0 },
       },
     });
 
-    // Try each candidate model until one succeeds.
+    // Try each candidate model until one succeeds, with a per-attempt timeout so
+    // a slow model can never hang the request forever.
     let data = null;
     let lastDetail = "";
-    let usedModel = "";
     for (const model of modelCandidates()) {
-      const aiRes = await fetch(apiUrl(model, key), {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: requestBody,
-      });
-      if (aiRes.ok) { data = await aiRes.json(); usedModel = model; break; }
-      lastDetail = (await aiRes.text().catch(() => "")) || "";
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 12000); // 12s cap per model
+      try {
+        const aiRes = await fetch(apiUrl(model, key), {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: requestBody,
+          signal: controller.signal,
+        });
+        clearTimeout(timer);
+        if (aiRes.ok) { data = await aiRes.json(); break; }
+        lastDetail = (await aiRes.text().catch(() => "")) || "";
+      } catch (e) {
+        clearTimeout(timer);
+        lastDetail = e?.name === "AbortError" ? ("Model " + model + " timed out.") : String(e?.message || e);
+      }
     }
 
     if (!data) {
