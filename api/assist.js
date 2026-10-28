@@ -13,7 +13,15 @@
 //   Optional: GEMINI_MODEL to override the model (default below). Pick a current
 //   model name from AI Studio if the default ever changes.
 
-const DEFAULT_MODEL = "gemini-2.5-flash";
+// Google retires model names over time, so we try a list in order until one
+// works. GEMINI_MODEL (if set) is tried first. "gemini-flash-latest" is an alias
+// that always points to a current Flash model, so it should keep working.
+const FALLBACK_MODELS = ["gemini-flash-latest", "gemini-3.8-flash", "gemini-3.5-flash", "gemini-2.5-flash-lite"];
+const modelCandidates = () => {
+  const env = process.env.GEMINI_MODEL;
+  const list = env ? [env, ...FALLBACK_MODELS] : FALLBACK_MODELS.slice();
+  return [...new Set(list)]; // de-dupe, preserve order
+};
 const apiUrl = (model, key) =>
   `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
@@ -68,29 +76,36 @@ export default async function handler(req, res) {
       "Nonprofit need:\n" + need.slice(0, 2000) +
       "\n\nAvailable listings (JSON):\n" + JSON.stringify(items);
 
-    const model = process.env.GEMINI_MODEL || DEFAULT_MODEL;
-
-    const aiRes = await fetch(apiUrl(model, key), {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: [{ role: "user", parts: [{ text: userMessage }] }],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 1024,
-          responseMimeType: "application/json",
-        },
-      }),
+    const requestBody = JSON.stringify({
+      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents: [{ role: "user", parts: [{ text: userMessage }] }],
+      generationConfig: {
+        temperature: 0.4,
+        maxOutputTokens: 2048,
+        responseMimeType: "application/json",
+      },
     });
 
-    if (!aiRes.ok) {
-      const detail = await aiRes.text().catch(() => "");
-      res.status(502).json({ error: "The AI service returned an error.", detail: detail.slice(0, 400) });
+    // Try each candidate model until one succeeds.
+    let data = null;
+    let lastDetail = "";
+    let usedModel = "";
+    for (const model of modelCandidates()) {
+      const aiRes = await fetch(apiUrl(model, key), {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: requestBody,
+      });
+      if (aiRes.ok) { data = await aiRes.json(); usedModel = model; break; }
+      lastDetail = (await aiRes.text().catch(() => "")) || "";
+    }
+
+    if (!data) {
+      // Surface the real reason directly in the on-screen message (no devtools needed).
+      res.status(502).json({ error: "AI error — " + lastDetail.slice(0, 300) });
       return;
     }
 
-    const data = await aiRes.json();
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
     let parsed;
